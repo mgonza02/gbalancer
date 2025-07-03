@@ -1,6 +1,9 @@
 # Sales Territory Balancer
 
-A React web application for creating and visualizing balanced sales force territories on a Google Map. This application serves as a planning tool for sales managers to automatically partition customers into balanced, geographically clustered polygons (territories).
+A React web application for creati2. **Set Parameters**:
+   - **Number of Sellers**: How many sales territories to create (1-20)
+   - **Max Customers per Territory**: Maximum customers any single seller should handle (1-100)
+   - **Min Customers per Territory**: Minimum customers per territory (0 = no minimum)and visualizing balanced sales force territories on a Google Map. This application serves as a planning tool for sales managers to automatically partition customers into balanced, geographically clustered polygons (territories).
 
 ## Features
 
@@ -71,16 +74,20 @@ As a sales manager, you can:
 
 ### Parameter Guidelines
 
-- **Capacity Check**: Total capacity (sellers × max customers) must be ≥ total customers
+- **Capacity Check**: Total max capacity (sellers × max customers) must be ≥ total customers
+- **Minimum Requirements**: Total min requirements (sellers × min customers) should be ≤ total customers
+- **Range Validation**: Min customers per territory must be ≤ max customers per territory
 - **Optimal Settings**: For 100 customers, try:
-  - 5 sellers with 25 max customers each
-  - 4 sellers with 30 max customers each
-  - 10 sellers with 15 max customers each
+  - 5 sellers with 15-25 customers each (min 15, max 25)
+  - 4 sellers with 20-30 customers each (min 20, max 30)
+  - 10 sellers with 8-15 customers each (min 8, max 15)
 
 ### Error Handling
 
 The application provides clear error messages for:
-- Insufficient capacity settings
+- Insufficient max capacity settings
+- Excessive minimum requirements
+- Invalid parameter ranges (min > max)
 - Unbalanced clustering results
 - Google Maps API issues
 - Invalid parameter inputs

@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { Container, Typography, Box, Paper, Grid } from '@mui/material';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { Box, Container, Grid, Paper, Typography } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { useState } from 'react';
 
 // Project imports
 import Controls from './components/Controls';
 import MapContainer from './components/MapContainer';
-import { generateTerritories } from './services/territoryService';
 import mockCustomers from './data/mockCustomers';
+import { generateTerritories } from './services/territoryService';
 
 // Create a simple theme
 const theme = createTheme({
@@ -30,7 +30,8 @@ function App() {
   const [territories, setTerritories] = useState([]);
   const [controls, setControls] = useState({
     numSellers: 5,
-    maxCustomersPerPolygon: 25
+    maxCustomersPerPolygon: 25,
+    minCustomersPerPolygon: 5
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);

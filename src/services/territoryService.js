@@ -7,9 +7,10 @@ import { kmeans } from 'ml-kmeans';
  * @param {Object} options - Configuration options
  * @param {number} options.numSellers - Number of sellers (territories)
  * @param {number} options.maxCustomersPerPolygon - Maximum customers per territory
+ * @param {number} options.minCustomersPerPolygon - Minimum customers per territory
  * @returns {Object} - Either success object with territories or error object
  */
-export const generateTerritories = async (customers, { numSellers, maxCustomersPerPolygon }) => {
+export const generateTerritories = async (customers, { numSellers, maxCustomersPerPolygon, minCustomersPerPolygon = 0 }) => {
   // Input validation
   if (!customers || customers.length === 0) {
     return { error: 'No customers provided' };
@@ -21,6 +22,14 @@ export const generateTerritories = async (customers, { numSellers, maxCustomersP
 
   if (!maxCustomersPerPolygon || maxCustomersPerPolygon <= 0) {
     return { error: 'Max customers per territory must be greater than 0' };
+  }
+
+  if (minCustomersPerPolygon < 0) {
+    return { error: 'Min customers per territory cannot be negative' };
+  }
+
+  if (minCustomersPerPolygon > maxCustomersPerPolygon) {
+    return { error: 'Min customers per territory cannot exceed max customers per territory' };
   }
 
   // Check if it's mathematically possible to assign all customers
@@ -53,9 +62,16 @@ export const generateTerritories = async (customers, { numSellers, maxCustomersP
 
     // Validate cluster sizes
     const oversizedClusters = [];
+    const undersizedClusters = [];
     Object.entries(customerGroups).forEach(([clusterIndex, customerGroup]) => {
       if (customerGroup.length > maxCustomersPerPolygon) {
         oversizedClusters.push({
+          territoryId: parseInt(clusterIndex) + 1,
+          customerCount: customerGroup.length
+        });
+      }
+      if (minCustomersPerPolygon > 0 && customerGroup.length < minCustomersPerPolygon && customerGroup.length > 0) {
+        undersizedClusters.push({
           territoryId: parseInt(clusterIndex) + 1,
           customerCount: customerGroup.length
         });
@@ -67,7 +83,16 @@ export const generateTerritories = async (customers, { numSellers, maxCustomersP
         .map(cluster => `Territory ${cluster.territoryId} has ${cluster.customerCount} customers`)
         .join(', ');
       return {
-        error: `Automated clustering resulted in unbalanced territories (${oversizedDetails}). Please adjust parameters or review customer distribution.`
+        error: `Automated clustering resulted in oversized territories (${oversizedDetails}). Please adjust parameters or review customer distribution.`
+      };
+    }
+
+    if (undersizedClusters.length > 0) {
+      const undersizedDetails = undersizedClusters
+        .map(cluster => `Territory ${cluster.territoryId} has ${cluster.customerCount} customers`)
+        .join(', ');
+      return {
+        error: `Automated clustering resulted in undersized territories (${undersizedDetails}). Please reduce minimum customers per territory or review customer distribution.`
       };
     }
 
