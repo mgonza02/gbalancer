@@ -19,3 +19,26 @@ export const settings = {
   defaultLayout: 'vertical',
   googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 };
+
+
+export const defaultBalancerConfig = {
+  sellers: 2,
+  customers: 500,
+  minTerritoriesPerSeller: 6,
+  territorySize: 1000,
+  maxTerritories: 60,
+  maxCustomersPerTerritory: 55,
+  minCustomersPerTerritory: 10,
+  maxSalesPerTerritory: 20000,
+  /*
+  For next version, we will add the following properties to the config:
+  maxOversizedTerritories: 5,
+  maxOversizedCustomers: 100,
+  maxOversizedTerritoriesPerSeller: 2,
+  maxOversizedCustomersPerSeller: 50,
+  maxOversizedTerritoriesPerPolygon: 3,
+  maxOversizedCustomersPerPolygon: 20,
+  maxOversizedTerritoriesPerPolygonPerSeller: 1,
+  maxOversizedCustomersPerPolygonPerSeller: 10,
+*/
+};

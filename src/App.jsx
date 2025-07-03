@@ -6,6 +6,7 @@ import { useState } from 'react';
 // Project imports
 import Controls from './components/Controls';
 import MapContainer from './components/MapContainer';
+import { defaultBalancerConfig } from './config';
 import mockCustomers from './data/mockCustomers';
 import { generateTerritories } from './services/territoryService';
 
@@ -29,9 +30,10 @@ function App() {
   const [customers] = useState(mockCustomers);
   const [territories, setTerritories] = useState([]);
   const [controls, setControls] = useState({
-    numSellers: 5,
-    maxCustomersPerPolygon: 55,
-    minCustomersPerPolygon: 20
+    ...defaultBalancerConfig,
+    numSellers:  defaultBalancerConfig.sellers,
+    maxCustomersPerPolygon: defaultBalancerConfig.maxCustomersPerTerritory,
+    minCustomersPerPolygon:  defaultBalancerConfig.minCustomersPerTerritory
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
