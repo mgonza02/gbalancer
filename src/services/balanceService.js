@@ -108,7 +108,7 @@ class BalanceService {
    */
   static getAllBalances() {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY); // eslint-disable-line no-undef
+      const stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) return [];
 
       const parsed = JSON.parse(stored);
@@ -209,11 +209,11 @@ class BalanceService {
    */
   static getStorageStats() {
     const balances = this.getAllBalances();
-    const storageData = localStorage.getItem(STORAGE_KEY) || ''; // eslint-disable-line no-undef
+    const storageData = localStorage.getItem(STORAGE_KEY) || '';
 
     return {
       totalBalances: balances.length,
-      storageUsed: new Blob([storageData]).size, // eslint-disable-line no-undef
+      storageUsed: new Blob([storageData]).size,
       maxBalances: MAX_SAVED_BALANCES,
       oldestBalance: balances.length > 0 ? balances[balances.length - 1].metadata.createdAt : undefined,
       newestBalance: balances.length > 0 ? balances[0].metadata.createdAt : undefined
@@ -224,7 +224,7 @@ class BalanceService {
    * Clear all saved balances
    */
   static clearAllBalances() {
-    localStorage.removeItem(STORAGE_KEY); // eslint-disable-line no-undef
+    localStorage.removeItem(STORAGE_KEY);
   }
 
   /**
@@ -265,12 +265,12 @@ class BalanceService {
 
   static saveToStorage(balances) {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(balances)); // eslint-disable-line no-undef
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(balances));
     } catch (error) {
       if (error.name === 'QuotaExceededError') {
         // Try to free up space by removing old balances
         const reducedBalances = balances.slice(0, Math.floor(MAX_SAVED_BALANCES * 0.7));
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(reducedBalances)); // eslint-disable-line no-undef
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(reducedBalances));
         throw new Error('Storage quota exceeded. Older balances have been removed.');
       }
       throw error;
