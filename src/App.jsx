@@ -29,12 +29,7 @@ const theme = createTheme({
 function App() {
   const [customers] = useState(mockCustomers);
   const [territories, setTerritories] = useState([]);
-  const [controls, setControls] = useState({
-    ...defaultBalancerConfig,
-    numSellers:  defaultBalancerConfig.sellers,
-    maxCustomersPerPolygon: defaultBalancerConfig.maxCustomersPerTerritory,
-    minCustomersPerPolygon:  defaultBalancerConfig.minCustomersPerTerritory
-  });
+  const [controls, setControls] = useState(defaultBalancerConfig);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
