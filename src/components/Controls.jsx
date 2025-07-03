@@ -1,7 +1,12 @@
-import { LocationOn, People, TrendingUp } from '@mui/icons-material';
-import { Alert, Box, Button, Card, CardContent, Chip, TextField, Typography } from '@mui/material';
+import { History, LocationOn, People, Save, TrendingUp } from '@mui/icons-material';
+import { Alert, Box, Button, Card, CardContent, Chip, Stack, TextField, Typography } from '@mui/material';
+import { useState } from 'react';
+import BalanceHistory from './BalanceHistory';
+import SaveBalanceDialog from './SaveBalanceDialog';
 
-const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, territories, customers, loading }) => {
+const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, territories, customers, loading, onLoadBalance }) => {
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const handleInputChange = (field, value) => {
     onControlsChange({
       ...controls,
@@ -105,6 +110,23 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
           {loading ? 'Generating Territories...' : 'Generate Territories'}
         </Button>
 
+        {/* Save and Load Controls */}
+        <Stack direction='row' spacing={1} sx={{ mb: 2 }}>
+          <Button
+            variant='outlined'
+            startIcon={<Save />}
+            onClick={() => setSaveDialogOpen(true)}
+            disabled={!territories || territories.length === 0}
+            fullWidth
+          >
+            Save Balance
+          </Button>
+
+          <Button variant='outlined' startIcon={<History />} onClick={() => setHistoryDialogOpen(true)} fullWidth>
+            History
+          </Button>
+        </Stack>
+
         {error && (
           <Alert severity='error' sx={{ mb: 2 }}>
             {error}
@@ -147,6 +169,25 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
           </Box>
         )}
       </CardContent>
+
+      {/* Save Balance Dialog */}
+      <SaveBalanceDialog
+        open={saveDialogOpen}
+        onClose={() => setSaveDialogOpen(false)}
+        customers={customers}
+        territories={territories}
+        controls={controls}
+      />
+
+      {/* Balance History Dialog */}
+      <BalanceHistory
+        open={historyDialogOpen}
+        onClose={() => setHistoryDialogOpen(false)}
+        onLoadBalance={onLoadBalance}
+        currentBalance={controls}
+        customers={customers}
+        territories={territories}
+      />
     </Card>
   );
 };

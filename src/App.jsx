@@ -58,6 +58,17 @@ function App() {
     }
   };
 
+  const handleLoadBalance = balance => {
+    // Update controls with the loaded balance configuration
+    setControls(balance.controls);
+
+    // Set the territories from the loaded balance
+    setTerritories(balance.territories);
+
+    // Clear any existing error
+    setError('');
+  };
+
   const handleControlsChange = newControls => {
     setControls(newControls);
     // Clear error when controls change
@@ -85,11 +96,12 @@ function App() {
 
         <Grid container spacing={3}>
           {/* Controls Panel */}
-          <Grid  size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Controls
               controls={controls}
               onControlsChange={handleControlsChange}
               onGenerateTerritories={handleGenerateTerritories}
+              onLoadBalance={handleLoadBalance}
               error={error}
               territories={territories}
               customers={customers}

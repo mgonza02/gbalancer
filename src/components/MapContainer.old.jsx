@@ -8,7 +8,6 @@ const libraries = ['geometry']; // or other libraries
 const MapContainer = ({ customers, territories }) => {
   const [activePolygon, setActivePolygon] = useState(null);
   const { googleMapsApiKey } = settings;
-  console.log('api', googleMapsApiKey);
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey,

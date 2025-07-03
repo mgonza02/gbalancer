@@ -1,15 +1,5 @@
 import { LocationOn, People, ZoomOutMap } from '@mui/icons-material';
-import {
-  Alert,
-  Box,
-  Chip,
-  CircularProgress,
-  Fade,
-  IconButton,
-  Paper,
-  Tooltip,
-  Typography
-} from '@mui/material';
+import { Alert, Box, Chip, CircularProgress, Fade, IconButton, Paper, Tooltip, Typography } from '@mui/material';
 import { GoogleMap, InfoWindowF, MarkerF, PolygonF, useJsApiLoader } from '@react-google-maps/api';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { settings } from '../config';
@@ -203,7 +193,6 @@ const MapContainer = ({ customers, territories }) => {
     },
     [territories, territoryColors]
   );
-console.log ('MapContainer rendered with customers:', customers?.length, 'territories:', territories?.length);
   // Error handling
   if (loadError) {
     console.error('Google Maps API load error:', loadError);
@@ -424,12 +413,7 @@ console.log ('MapContainer rendered with customers:', customers?.length, 'territ
                     <Typography variant='body2' flex={1}>
                       Territory {territory.id}
                     </Typography>
-                    <Chip
-                      label={territory.customerCount}
-                      size='small'
-                      variant='outlined'
-                      sx={{ minWidth: 'auto' }}
-                    />
+                    <Chip label={territory.customerCount} size='small' variant='outlined' sx={{ minWidth: 'auto' }} />
                   </Box>
                 );
               })}
