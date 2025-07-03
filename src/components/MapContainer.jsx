@@ -1,49 +1,69 @@
-import { LocationOn, People } from '@mui/icons-material';
-import { Box, Chip, CircularProgress, Paper, Typography } from '@mui/material';
+import { LocationOn, People, ZoomOutMap } from '@mui/icons-material';
+import {
+  Alert,
+  Box,
+  Chip,
+  CircularProgress,
+  Fade,
+  IconButton,
+  Paper,
+  Tooltip,
+  Typography
+} from '@mui/material';
 import { GoogleMap, InfoWindowF, MarkerF, PolygonF, useJsApiLoader } from '@react-google-maps/api';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { settings } from '../config';
 
- const MapContainer = ({ customers, territories }) => {
+const LIBRARIES = ['geometry', 'places'];
+
+const MapContainer = ({ customers, territories }) => {
   const [activePolygon, setActivePolygon] = useState(null);
-  // console.log('api', apiKey);
+  const [activeMarker, setActiveMarker] = useState(null);
+  const [mapInstance, setMapInstance] = useState(null);
+  const mapRef = useRef(null);
+
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: settings.googleMapsApiKey,
-    libraries: ['geometry']
+    libraries: LIBRARIES,
+    version: 'weekly' // Use the latest weekly version
   });
 
-  // Color palette for territories
-  const territoryColors = [
-    '#FF6B6B',
-    '#4ECDC4',
-    '#45B7D1',
-    '#96CEB4',
-    '#FECA57',
-    '#FF9FF3',
-    '#54A0FF',
-    '#5F27CD',
-    '#00D2D3',
-    '#FF9F43',
-    '#2ED573',
-    '#FFA502',
-    '#FF6348',
-    '#70A1FF',
-    '#5352ED'
-  ];
+  // Modern color palette with better contrast
+  const territoryColors = useMemo(
+    () => [
+      '#E53E3E',
+      '#38A169',
+      '#3182CE',
+      '#805AD5',
+      '#D69E2E',
+      '#DD6B20',
+      '#319795',
+      '#E53E3E',
+      '#9F7AEA',
+      '#4A5568',
+      '#2B6CB0',
+      '#C53030',
+      '#2F855A',
+      '#B794F6',
+      '#F56565'
+    ],
+    []
+  );
 
-  // Calculate map bounds and center based on all customers
+  // Calculate map bounds and center with better precision
   const mapBounds = useMemo(() => {
     if (!customers || customers.length === 0) return null;
 
     const latitudes = customers.map(c => c.location.lat);
     const longitudes = customers.map(c => c.location.lng);
 
+    const padding = 0.005; // Reduced padding for better fit
     const bounds = {
-      north: Math.max(...latitudes) + 0.01,
-      south: Math.min(...latitudes) - 0.01,
-      east: Math.max(...longitudes) + 0.01,
-      west: Math.min(...longitudes) - 0.01
+      north: Math.max(...latitudes) + padding,
+      south: Math.min(...latitudes) - padding,
+      east: Math.max(...longitudes) + padding,
+      west: Math.min(...longitudes) - padding
     };
 
     const center = {
@@ -54,34 +74,159 @@ import { settings } from '../config';
     return { bounds, center };
   }, [customers]);
 
-  const handlePolygonClick = territory => {
+  // Modern map styling
+  const mapStyles = useMemo(
+    () => [
+      {
+        featureType: 'administrative',
+        elementType: 'geometry',
+        stylers: [{ visibility: 'off' }]
+      },
+      {
+        featureType: 'poi',
+        stylers: [{ visibility: 'off' }]
+      },
+      {
+        featureType: 'road',
+        elementType: 'labels.icon',
+        stylers: [{ visibility: 'off' }]
+      },
+      {
+        featureType: 'road.highway',
+        elementType: 'geometry',
+        stylers: [{ color: '#f0f0f0' }]
+      },
+      {
+        featureType: 'road.arterial',
+        elementType: 'geometry',
+        stylers: [{ color: '#f8f8f8' }]
+      },
+      {
+        featureType: 'water',
+        elementType: 'geometry',
+        stylers: [{ color: '#e0f2fe' }]
+      }
+    ],
+    []
+  );
+
+  // Map options with modern features
+  const mapOptions = useMemo(
+    () => ({
+      disableDefaultUI: false,
+      zoomControl: true,
+      streetViewControl: false,
+      mapTypeControl: true,
+      fullscreenControl: true,
+      scrollwheel: true,
+      gestureHandling: 'greedy',
+      styles: mapStyles,
+      clickableIcons: false,
+      mapTypeId: 'roadmap',
+      restriction: mapBounds?.bounds
+        ? {
+            latLngBounds: mapBounds.bounds,
+            strictBounds: false
+          }
+        : undefined
+    }),
+    [mapStyles, mapBounds]
+  );
+
+  // Handle map load
+  const onMapLoad = useCallback(
+    map => {
+      setMapInstance(map);
+
+      // Fit bounds if we have customers
+      if (mapBounds && customers?.length > 0) {
+        const bounds = new window.google.maps.LatLngBounds();
+        customers.forEach(customer => {
+          bounds.extend(customer.location);
+        });
+        map.fitBounds(bounds);
+      }
+    },
+    [mapBounds, customers]
+  );
+
+  // Handle polygon click with better UX
+  const handlePolygonClick = useCallback(territory => {
     setActivePolygon(territory);
-  };
+    setActiveMarker(null);
+  }, []);
 
-  const handleMapClick = () => {
+  // Handle marker click
+  const handleMarkerClick = useCallback(customer => {
+    setActiveMarker(customer);
     setActivePolygon(null);
-  };
+  }, []);
 
+  // Handle map click
+  const handleMapClick = useCallback(() => {
+    setActivePolygon(null);
+    setActiveMarker(null);
+  }, []);
+
+  // Fit bounds function
+  const fitBounds = useCallback(() => {
+    if (mapInstance && customers?.length > 0) {
+      const bounds = new window.google.maps.LatLngBounds();
+      customers.forEach(customer => {
+        bounds.extend(customer.location);
+      });
+      mapInstance.fitBounds(bounds);
+    }
+  }, [mapInstance, customers]);
+
+  // Custom marker icon
+  const getMarkerIcon = useCallback(
+    customer => {
+      // Find which territory this customer belongs to
+      const territory = territories?.find(t => t.customers.some(c => c.id === customer.id));
+
+      const colorIndex = territory ? (territory.id - 1) % territoryColors.length : 0;
+      const color = territoryColors[colorIndex];
+
+      return {
+        url:
+          'data:image/svg+xml;charset=UTF-8,' +
+          encodeURIComponent(`
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" fill="${color}" stroke="#fff" stroke-width="2"/>
+          <circle cx="12" cy="12" r="4" fill="#fff"/>
+        </svg>
+      `),
+        scaledSize: new window.google.maps.Size(24, 24),
+        anchor: new window.google.maps.Point(12, 12)
+      };
+    },
+    [territories, territoryColors]
+  );
+console.log ('MapContainer rendered with customers:', customers?.length, 'territories:', territories?.length);
+  // Error handling
   if (loadError) {
+    console.error('Google Maps API load error:', loadError);
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
-        <Paper sx={{ p: 3, textAlign: 'center' }}>
-          <Typography variant='h6' color='error' gutterBottom>
-            Error loading Google Maps
-          </Typography>
+      <Box sx={{ height: '600px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <Paper sx={{ p: 3, textAlign: 'center', maxWidth: 500 }}>
+          <Alert severity='error' sx={{ mb: 2 }}>
+            Failed to load Google Maps
+          </Alert>
           <Typography variant='body2' color='text.secondary'>
-            Please check your Google Maps API key in the .env.local file
+            Please check your Google Maps API key and ensure it has the necessary permissions.
           </Typography>
         </Paper>
       </Box>
     );
   }
 
+  // Loading state
   if (!isLoaded) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+      <Box sx={{ height: '600px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <Box sx={{ textAlign: 'center' }}>
-          <CircularProgress />
+          <CircularProgress size={48} />
           <Typography variant='body2' sx={{ mt: 2 }}>
             Loading Google Maps...
           </Typography>
@@ -93,22 +238,27 @@ import { settings } from '../config';
   return (
     <Box sx={{ height: '600px', width: '100%', position: 'relative' }}>
       <GoogleMap
+        ref={mapRef}
         mapContainerStyle={{ height: '100%', width: '100%' }}
         center={mapBounds ? mapBounds.center : { lat: 37.7749, lng: -122.4194 }}
         zoom={mapBounds ? 10 : 11}
+        onLoad={onMapLoad}
         onClick={handleMapClick}
-        options={{
-          disableDefaultUI: false,
-          zoomControl: true,
-          streetViewControl: false,
-          mapTypeControl: true,
-          fullscreenControl: true
-        }}
+        options={mapOptions}
       >
         {/* Render customer markers */}
-        {customers && customers.map(customer => <MarkerF key={customer.id} position={customer.location} title={customer.name} />)}
+        {customers &&
+          customers.map(customer => (
+            <MarkerF
+              key={customer.id}
+              position={customer.location}
+              title={customer.name}
+              onClick={() => handleMarkerClick(customer)}
+              icon={getMarkerIcon(customer)}
+            />
+          ))}
 
-        {/* Render territory polygons */}
+        {/* Render territory polygons with improved styling */}
         {territories &&
           territories.map((territory, index) => {
             const colorIndex = index % territoryColors.length;
@@ -121,7 +271,7 @@ import { settings } from '../config';
                 onClick={() => handlePolygonClick(territory)}
                 options={{
                   fillColor: color,
-                  fillOpacity: 0.2,
+                  fillOpacity: 0.15,
                   strokeColor: color,
                   strokeOpacity: 0.8,
                   strokeWeight: 2,
@@ -135,21 +285,28 @@ import { settings } from '../config';
             );
           })}
 
-        {/* Info window for active polygon */}
+        {/* Enhanced info window for active polygon */}
         {activePolygon && (
-          <InfoWindowF position={activePolygon.centroid} onCloseClick={() => setActivePolygon(null)}>
-            <Box sx={{ p: 1, minWidth: 200 }}>
-              <Typography variant='h6' gutterBottom>
+          <InfoWindowF
+            position={activePolygon.centroid}
+            onCloseClick={() => setActivePolygon(null)}
+            options={{
+              pixelOffset: new window.google.maps.Size(0, -10),
+              maxWidth: 300
+            }}
+          >
+            <Box sx={{ p: 1 }}>
+              <Typography variant='h6' gutterBottom color='primary'>
                 Territory {activePolygon.id}
               </Typography>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <People fontSize='small' />
+                <People fontSize='small' color='primary' />
                 <Typography variant='body2'>{activePolygon.customerCount} customers</Typography>
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <LocationOn fontSize='small' />
+                <LocationOn fontSize='small' color='secondary' />
                 <Typography variant='body2'>
                   Center: {activePolygon.centroid.lat.toFixed(4)}, {activePolygon.centroid.lng.toFixed(4)}
                 </Typography>
@@ -161,52 +318,144 @@ import { settings } from '../config';
 
               <Box sx={{ maxHeight: 150, overflowY: 'auto' }}>
                 {activePolygon.customers.map(customer => (
-                  <Chip key={customer.id} label={customer.name} size='small' variant='outlined' sx={{ mr: 0.5, mb: 0.5 }} />
+                  <Chip
+                    key={customer.id}
+                    label={customer.name}
+                    size='small'
+                    variant='outlined'
+                    sx={{ mr: 0.5, mb: 0.5 }}
+                    onClick={() => handleMarkerClick(customer)}
+                  />
                 ))}
               </Box>
             </Box>
           </InfoWindowF>
         )}
+
+        {/* Info window for active marker */}
+        {activeMarker && (
+          <InfoWindowF
+            position={activeMarker.location}
+            onCloseClick={() => setActiveMarker(null)}
+            options={{
+              pixelOffset: new window.google.maps.Size(0, -30)
+            }}
+          >
+            <Box sx={{ p: 1 }}>
+              <Typography variant='h6' gutterBottom>
+                {activeMarker.name}
+              </Typography>
+              <Typography variant='body2' color='text.secondary'>
+                ID: {activeMarker.id}
+              </Typography>
+              <Typography variant='body2' color='text.secondary'>
+                Location: {activeMarker.location.lat.toFixed(4)}, {activeMarker.location.lng.toFixed(4)}
+              </Typography>
+            </Box>
+          </InfoWindowF>
+        )}
       </GoogleMap>
 
-      {/* Map legend */}
+      {/* Enhanced map controls */}
+      <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
+        <Tooltip title='Fit all territories'>
+          <IconButton
+            onClick={fitBounds}
+            sx={{
+              bgcolor: 'background.paper',
+              boxShadow: 2,
+              '&:hover': { bgcolor: 'action.hover' }
+            }}
+          >
+            <ZoomOutMap />
+          </IconButton>
+        </Tooltip>
+      </Box>
+
+      {/* Enhanced map legend */}
       {territories && territories.length > 0 && (
+        <Fade in={true} timeout={500}>
+          <Paper
+            elevation={3}
+            sx={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+              p: 2,
+              maxWidth: 280,
+              bgcolor: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: 2
+            }}
+          >
+            <Typography variant='subtitle2' gutterBottom fontWeight='bold'>
+              Territory Legend
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {territories.map((territory, index) => {
+                const colorIndex = index % territoryColors.length;
+                const color = territoryColors[colorIndex];
+
+                return (
+                  <Box
+                    key={territory.id}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      p: 0.5,
+                      borderRadius: 1,
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: 'action.hover' },
+                      bgcolor: activePolygon?.id === territory.id ? 'action.selected' : 'transparent'
+                    }}
+                    onClick={() => handlePolygonClick(territory)}
+                  >
+                    <Box
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        bgcolor: color,
+                        borderRadius: '50%',
+                        border: '2px solid #fff',
+                        boxShadow: 1
+                      }}
+                    />
+                    <Typography variant='body2' flex={1}>
+                      Territory {territory.id}
+                    </Typography>
+                    <Chip
+                      label={territory.customerCount}
+                      size='small'
+                      variant='outlined'
+                      sx={{ minWidth: 'auto' }}
+                    />
+                  </Box>
+                );
+              })}
+            </Box>
+          </Paper>
+        </Fade>
+      )}
+
+      {/* Map statistics */}
+      {customers && customers.length > 0 && (
         <Paper
+          elevation={2}
           sx={{
             position: 'absolute',
-            top: 10,
-            right: 10,
+            bottom: 16,
+            left: 16,
             p: 2,
-            maxWidth: 250,
-            bgcolor: 'rgba(255, 255, 255, 0.95)'
+            bgcolor: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: 2
           }}
         >
-          <Typography variant='subtitle2' gutterBottom>
-            Territories
+          <Typography variant='caption' color='text.secondary'>
+            Total Customers: {customers.length} | Territories: {territories?.length || 0} | Avg per Territory:{' '}
+            {territories?.length ? Math.round(customers.length / territories.length) : 0}
           </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-            {territories.map((territory, index) => {
-              const colorIndex = index % territoryColors.length;
-              const color = territoryColors[colorIndex];
-
-              return (
-                <Box key={territory.id} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box
-                    sx={{
-                      width: 16,
-                      height: 16,
-                      bgcolor: color,
-                      borderRadius: '50%',
-                      border: '1px solid #fff'
-                    }}
-                  />
-                  <Typography variant='body2'>
-                    Territory {territory.id} ({territory.customerCount})
-                  </Typography>
-                </Box>
-              );
-            })}
-          </Box>
         </Paper>
       )}
     </Box>

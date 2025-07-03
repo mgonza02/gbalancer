@@ -17,5 +17,5 @@ export const settings = {
   defaultPresetColor: 'default',
   defaultNavColor: 'default',
   defaultLayout: 'vertical',
-  googleMapsApiKey: 'AIzaSyAqdt8h9Fg-2gUMAIGBMW7xEqiE48nP1d0', // Replace with your actual Google Maps API key
-}
+  googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+};

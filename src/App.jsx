@@ -30,8 +30,8 @@ function App() {
   const [territories, setTerritories] = useState([]);
   const [controls, setControls] = useState({
     numSellers: 5,
-    maxCustomersPerPolygon: 25,
-    minCustomersPerPolygon: 5
+    maxCustomersPerPolygon: 55,
+    minCustomersPerPolygon: 20
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -85,7 +85,7 @@ function App() {
 
         <Grid container spacing={3}>
           {/* Controls Panel */}
-          <Grid item xs={12} md={4}>
+          <Grid  size={{ xs: 12, md: 4 }}>
             <Controls
               controls={controls}
               onControlsChange={handleControlsChange}
@@ -98,7 +98,12 @@ function App() {
           </Grid>
 
           {/* Map Container */}
-          <Grid item xs={12} md={8}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 8
+            }}
+          >
             <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden' }}>
               <MapContainer customers={customers} territories={territories} />
             </Paper>
