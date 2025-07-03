@@ -1,33 +1,89 @@
-# Modern Dashboard Template
+# Sales Territory Balancer
 
-A clean and modern React dashboard template built with Material-UI, featuring dark/light mode switching and multilanguage support.
+A React web application for creating and visualizing balanced sales force territories on a Google Map. This application serves as a planning tool for sales managers to automatically partition customers into balanced, geographically clustered polygons (territories).
 
 ## Features
 
-- ✨ **Modern Design**: Built with Material-UI components and modern React patterns
-- 🌙 **Dark/Light Mode**: Toggle between dark and light themes with persistent settings
-- 🌍 **Multilanguage Support**: English and Spanish language support with i18next
-- 📱 **Responsive Layout**: Mobile-first responsive design
-- 🎨 **Customizable Themes**: Easy theme customization with Material-UI theming
-- 🔧 **Ready to Use**: Clean project structure ready for development
+- **Interactive Google Maps Integration**: View customers and territories on a real map
+- **K-means Clustering**: Automatically cluster customers into balanced territories
+- **Convex Hull Visualization**: Generate polygon boundaries for each territory
+- **Real-time Validation**: Ensure territories don't exceed customer limits
+- **Interactive Territory Info**: Click on territories to see detailed information
+- **Responsive Design**: Works on desktop and mobile devices
 
-## Tech Stack
+## Core User Story
 
-- **React 19** - Modern React with hooks
-- **Material-UI (MUI)** - React UI framework
-- **React Router** - Client-side routing
-- **i18next** - Internationalization framework
-- **Vite** - Fast build tool
-- **ESLint & Prettier** - Code linting and formatting
+As a sales manager, you can:
+1. Load a set of 100 geolocated customers onto a map (San Francisco Bay Area)
+2. Specify the number of available sellers
+3. Set the maximum number of customers any single seller should handle
+4. Click "Generate Territories" to automatically partition customers into balanced, geographically clustered territories
+5. View the resulting territories as colored polygons on the map
 
-## Getting Started
+## Setup Instructions
 
 ### Prerequisites
-
 - Node.js 18+
-- npm or yarn
+- Google Maps API key
 
 ### Installation
+
+1. **Clone and navigate to the project**:
+   ```bash
+   cd /path/to/gbalancer
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Configure Google Maps API**:
+   - Copy `.env.local` and add your Google Maps API key:
+   ```
+   VITE_GOOGLE_MAPS_API_KEY="your-actual-api-key-here"
+   ```
+   - Enable the following APIs in Google Cloud Console:
+     - Maps JavaScript API
+     - Geocoding API
+
+4. **Start the development server**:
+   ```bash
+   npm start
+   ```
+
+5. **Access the application**:
+   - Open your browser and navigate to `http://localhost:3003/gbalancer`
+
+## Usage Guide
+
+### Basic Operation
+
+1. **View Customer Data**: The map loads with 100 mock customers distributed across the San Francisco Bay Area
+2. **Set Parameters**:
+   - **Number of Sellers**: How many sales territories to create (1-20)
+   - **Max Customers per Territory**: Maximum customers any single seller should handle (1-100)
+3. **Generate Territories**: Click the "Generate Territories" button to create balanced territories
+4. **Explore Results**:
+   - View territories as colored polygons on the map
+   - Click on any territory to see detailed information
+   - Use the legend to identify different territories
+
+### Parameter Guidelines
+
+- **Capacity Check**: Total capacity (sellers × max customers) must be ≥ total customers
+- **Optimal Settings**: For 100 customers, try:
+  - 5 sellers with 25 max customers each
+  - 4 sellers with 30 max customers each
+  - 10 sellers with 15 max customers each
+
+### Error Handling
+
+The application provides clear error messages for:
+- Insufficient capacity settings
+- Unbalanced clustering results
+- Google Maps API issues
+- Invalid parameter inputs
 
 1. Clone the repository
 ```bash
@@ -117,3 +173,118 @@ This project is licensed under the MIT License.
 ## Support
 
 For questions and support, please open an issue on the GitHub repository.
+
+## Technical Implementation
+
+### Core Technologies
+
+- **React 19**: Modern React with hooks for state management
+- **Material-UI**: Professional UI components and theming
+- **@react-google-maps/api**: Google Maps integration for React
+- **ml-kmeans**: K-means clustering algorithm for territory creation
+- **convex-hull**: Polygon boundary calculation for territory visualization
+- **Vite**: Fast development build tool
+
+### Architecture
+
+```
+src/
+├── components/
+│   ├── Controls.jsx          # User input panel for territory parameters
+│   └── MapContainer.jsx      # Google Maps display with markers and polygons
+├── services/
+│   └── territoryService.js   # Core business logic for territory generation
+├── data/
+│   └── mockCustomers.js      # Mock customer data (100 customers)
+├── App.jsx                   # Main application orchestrator
+└── index.jsx                 # Application entry point
+```
+
+### Key Algorithms
+
+1. **K-means Clustering**:
+   - Groups customers into geographically close clusters
+   - Number of clusters = number of sellers
+   - Uses kmeans++ initialization for better results
+
+2. **Convex Hull Calculation**:
+   - Creates polygon boundaries around customer clusters
+   - Handles edge cases (1-2 customers) with special shapes
+   - Falls back to bounding boxes if hull calculation fails
+
+3. **Validation Logic**:
+   - Pre-clustering: Ensures sufficient capacity
+   - Post-clustering: Validates no territory exceeds customer limits
+   - Provides clear error messages for adjustments
+
+## Customization Options
+
+### Adding New Customer Data
+
+Replace the mock data in `src/data/mockCustomers.js`:
+```javascript
+const mockCustomers = [
+  { id: 1, name: 'Customer Name', location: { lat: 37.7749, lng: -122.4194 } },
+  // ... more customers
+];
+```
+
+### Modifying Territory Colors
+
+Edit the color palette in `src/components/MapContainer.jsx`:
+```javascript
+const territoryColors = [
+  '#FF6B6B', '#4ECDC4', '#45B7D1', // Add more colors
+];
+```
+
+### Adjusting Clustering Parameters
+
+Modify clustering settings in `src/services/territoryService.js`:
+```javascript
+const kmeansResult = kmeans(coordinates, numSellers, {
+  initialization: 'kmeans++',
+  maxIterations: 100,
+  tolerance: 1e-6
+});
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Google Maps not loading**:
+   - Verify API key is correct in `.env.local`
+   - Check that Maps JavaScript API is enabled
+   - Ensure billing is set up in Google Cloud Console
+
+2. **Clustering errors**:
+   - Reduce number of sellers or increase max customers
+   - Ensure customer data has valid lat/lng coordinates
+   - Check browser console for detailed error messages
+
+3. **Performance issues**:
+   - Limit customer data to <1000 points for optimal performance
+   - Consider using marker clustering for large datasets
+   - Reduce polygon complexity for better rendering
+
+### Development Tips
+
+- Use React DevTools for debugging component state
+- Check Network tab for Google Maps API call issues
+- Monitor console for clustering algorithm warnings
+- Test with different parameter combinations
+
+## Future Enhancements
+
+Potential improvements for production use:
+- **Advanced Balancing**: Implement territory rebalancing algorithms
+- **Custom Constraints**: Add distance limits, demographic balancing
+- **Data Import**: CSV/Excel file upload for customer data
+- **Export Features**: Save territories as GeoJSON or print maps
+- **Performance Optimization**: Marker clustering for large datasets
+- **Real-time Updates**: WebSocket integration for live territory updates
+
+## License
+
+This project is licensed under the MIT License.

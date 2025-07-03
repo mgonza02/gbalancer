@@ -38,7 +38,9 @@
     "@mui/material": "7.1.2",
     "@mui/system": "7.1.1",
     "@mui/x-charts": "8.6.0",
+    "@react-google-maps/api": "^2.20.7",
     "@vitejs/plugin-react": "4.5.2",
+    "convex-hull": "^1.0.3",
     "d3": "^7.9.0",
     "formik": "2.4.6",
     "framer-motion": "12.8.2",
@@ -47,6 +49,7 @@
     "i18next-browser-languagedetector": "^8.2.0",
     "jspdf": "^3.0.1",
     "lodash-es": "4.17.21",
+    "ml-kmeans": "^6.0.0",
     "react": "19.1.0",
     "react-device-detect": "2.2.3",
     "react-dom": "19.1.0",
@@ -57,8 +60,8 @@
     "simplebar-react": "3.3.0",
     "swr": "2.3.3",
     "vite": "7.0.0",
-    "web-vitals": "4.2.4",
     "vite-jsconfig-paths": "2.0.1",
+    "web-vitals": "4.2.4",
     "yup": "1.6.1"
   },
   "eslintConfig": {
