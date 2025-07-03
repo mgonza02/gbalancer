@@ -17,13 +17,20 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
   const totalCustomers = customers?.length || 0;
   const totalCapacity = (controls.numSellers || 0) * (controls.maxCustomersPerPolygon || 0);
   const minCapacity = (controls.numSellers || 0) * (controls.minCustomersPerPolygon || 0);
+  const minTerritories = (controls.numSellers || 0) * (controls.minTerritoriesPerSeller || 0);
+
   const isValid =
     totalCapacity >= totalCustomers &&
     controls.numSellers > 0 &&
     controls.maxCustomersPerPolygon > 0 &&
     controls.minCustomersPerPolygon >= 0 &&
     controls.minCustomersPerPolygon <= controls.maxCustomersPerPolygon &&
-    minCapacity <= totalCustomers;
+    minCapacity <= totalCustomers &&
+    controls.minTerritoriesPerSeller > 0 &&
+    controls.territorySize > 0 &&
+    controls.maxTerritories > 0 &&
+    controls.maxSalesPerTerritory > 0 &&
+    minTerritories <= controls.maxTerritories;
 
   const getValidationMessage = () => {
     if (totalCapacity < totalCustomers) {
@@ -34,6 +41,21 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
     }
     if (minCapacity > totalCustomers) {
       return '⚠ Minimum requirements exceed total customers - reduce min customers or sellers';
+    }
+    if (minTerritories > controls.maxTerritories) {
+      return '⚠ Minimum territories required exceed max territories limit';
+    }
+    if (!controls.minTerritoriesPerSeller || controls.minTerritoriesPerSeller <= 0) {
+      return '⚠ Minimum territories per seller must be greater than 0';
+    }
+    if (!controls.territorySize || controls.territorySize <= 0) {
+      return '⚠ Territory size must be greater than 0';
+    }
+    if (!controls.maxTerritories || controls.maxTerritories <= 0) {
+      return '⚠ Maximum territories must be greater than 0';
+    }
+    if (!controls.maxSalesPerTerritory || controls.maxSalesPerTerritory <= 0) {
+      return '⚠ Maximum sales per territory must be greater than 0';
     }
     return '⚠ Please check configuration';
   };
@@ -59,6 +81,39 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
           />
 
           <TextField
+            label='Min Territories per Seller'
+            type='number'
+            value={controls.minTerritoriesPerSeller || ''}
+            onChange={e => handleInputChange('minTerritoriesPerSeller', parseInt(e.target.value) || 0)}
+            inputProps={{ min: 1, max: 20 }}
+            fullWidth
+            size='small'
+            helperText='Minimum territories each seller must handle'
+          />
+
+          <TextField
+            label='Territory Size'
+            type='number'
+            value={controls.territorySize || ''}
+            onChange={e => handleInputChange('territorySize', parseInt(e.target.value) || 0)}
+            inputProps={{ min: 100, max: 10000 }}
+            fullWidth
+            size='small'
+            helperText='Target territory size (geographic area)'
+          />
+
+          <TextField
+            label='Max Territories'
+            type='number'
+            value={controls.maxTerritories || ''}
+            onChange={e => handleInputChange('maxTerritories', parseInt(e.target.value) || 0)}
+            inputProps={{ min: 1, max: 200 }}
+            fullWidth
+            size='small'
+            helperText='Maximum total territories to create'
+          />
+
+          <TextField
             label='Max Customers per Territory'
             type='number'
             value={controls.maxCustomersPerPolygon || ''}
@@ -80,6 +135,17 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
             helperText='Minimum customers per territory (0 = no minimum)'
             error={controls.minCustomersPerPolygon > controls.maxCustomersPerPolygon}
           />
+
+          <TextField
+            label='Max Sales per Territory'
+            type='number'
+            value={controls.maxSalesPerTerritory || ''}
+            onChange={e => handleInputChange('maxSalesPerTerritory', parseInt(e.target.value) || 0)}
+            inputProps={{ min: 1000, max: 100000 }}
+            fullWidth
+            size='small'
+            helperText='Maximum sales target per territory'
+          />
         </Box>
 
         {/* Capacity Summary */}
@@ -96,6 +162,20 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                 label={`${minCapacity} Min Required`}
                 size='small'
                 color={minCapacity <= totalCustomers ? 'success' : 'warning'}
+              />
+            )}
+            {controls.maxTerritories > 0 && (
+              <Chip
+                label={`${controls.maxTerritories} Max Territories`}
+                size='small'
+                color='info'
+              />
+            )}
+            {controls.minTerritoriesPerSeller > 0 && (
+              <Chip
+                label={`${minTerritories} Min Territories`}
+                size='small'
+                color={minTerritories <= controls.maxTerritories ? 'success' : 'warning'}
               />
             )}
           </Box>
