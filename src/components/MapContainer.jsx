@@ -1,14 +1,15 @@
-import React, { useState, useMemo } from 'react';
-import { useJsApiLoader, GoogleMap, MarkerF, PolygonF, InfoWindowF } from '@react-google-maps/api';
-import { Box, Typography, Paper, Chip, CircularProgress } from '@mui/material';
 import { LocationOn, People } from '@mui/icons-material';
+import { Box, Chip, CircularProgress, Paper, Typography } from '@mui/material';
+import { GoogleMap, InfoWindowF, MarkerF, PolygonF, useJsApiLoader } from '@react-google-maps/api';
+import { useMemo, useState } from 'react';
+import { settings } from '../config';
 
-const MapContainer = ({ customers, territories }) => {
+ const MapContainer = ({ customers, territories }) => {
   const [activePolygon, setActivePolygon] = useState(null);
-
+  // console.log('api', apiKey);
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: settings.googleMapsApiKey,
     libraries: ['geometry']
   });
 
