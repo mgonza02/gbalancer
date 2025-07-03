@@ -1,6 +1,6 @@
 import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import { initReactI18next } from 'react-i18next';
 
 // Translation resources
 const resources = {
@@ -57,44 +57,14 @@ const resources = {
 
       // Dashboard
       dashboard: {
-        title: 'Cutting Planner Dashboard',
-        subtitle: 'Optimize material usage with intelligent piece cutting and guillotine cut planning',
-        totalProjects: 'Total Projects',
-        sheetsUsed: 'Sheets Used',
-        totalPieces: 'Total Pieces',
-        guillotineCuts: 'Guillotine Cuts',
-        avgEfficiency: 'Avg Efficiency',
-        thisMonth: 'This month',
-        totalCalculated: 'Total calculated',
-        allProjects: 'All projects',
-        totalOperations: 'Total operations',
-        materialUsage: 'Material usage',
-        quickActions: 'Quick Actions',
-        newPlanningTitle: 'New Planning',
-        newPlanningDesc: 'Start a new piece cutting optimization project',
-        viewHistoryTitle: 'View History',
-        viewHistoryDesc: 'Browse your previous piece cutting projects',
-        recentProjects: 'Recent Projects',
-        noProjects: 'No projects yet',
-        createFirstProject: 'Create your first piece cutting project',
-        viewAllProjects: 'View All Projects',
-        efficiency: 'Efficiency',
-        pieces: 'pieces',
-        sheets: 'sheets',
-        actions: 'Actions',
-        supportedMaterials: 'Supported Materials & Cutting Applications',
-        glass: 'Glass',
-        glassDesc: 'Windows, partitions, displays',
-        glassNote: 'Straight guillotine cuts only',
-        wood: 'Wood',
-        woodDesc: 'Panels, doors, shelving',
-        woodNote: 'Optimized for piece yield',
-        metal: 'Metal',
-        metalDesc: 'Steel, aluminum sheets',
-        metalNote: 'Minimizes waste material',
-        plastic: 'Plastic',
-        plasticDesc: 'Acrylic, polycarbonate',
-        plasticNote: 'Clean cut optimization'
+        welcome: 'Welcome to Your Application',
+        subtitle: 'Modern React Dashboard Template',
+        description:
+          'This is a clean, modern dashboard template built with React, Material-UI, and includes dark/light mode switching and multilanguage support.',
+        mainContent: 'Main Content Area',
+        sidePanel: 'Side Panel',
+        emptyState: 'Your content will appear here',
+        sidebarEmpty: 'Sidebar content goes here'
       },
 
       // New Planning
@@ -329,44 +299,14 @@ const resources = {
 
       // Dashboard
       dashboard: {
-        title: 'Panel de Planificación de Cortes',
-        subtitle: 'Optimiza el uso de material con planificación inteligente de piezas y cortes guillotina',
-        totalProjects: 'Proyectos Totales',
-        sheetsUsed: 'Láminas Utilizadas',
-        totalPieces: 'Piezas Totales',
-        guillotineCuts: 'Cortes Guillotina',
-        avgEfficiency: 'Eficiencia Promedio',
-        thisMonth: 'Este mes',
-        totalCalculated: 'Total calculado',
-        allProjects: 'Todos los proyectos',
-        totalOperations: 'Operaciones totales',
-        materialUsage: 'Uso de material',
-        quickActions: 'Acciones Rápidas',
-        newPlanningTitle: 'Nueva Planificación',
-        newPlanningDesc: 'Iniciar un nuevo proyecto de optimización de corte de piezas',
-        viewHistoryTitle: 'Ver Historial',
-        viewHistoryDesc: 'Explorar tus proyectos anteriores de corte de piezas',
-        recentProjects: 'Proyectos Recientes',
-        noProjects: 'Aún no hay proyectos',
-        createFirstProject: 'Crea tu primer proyecto de corte de piezas',
-        viewAllProjects: 'Ver Todos los Proyectos',
-        efficiency: 'Eficiencia',
-        pieces: 'piezas',
-        sheets: 'láminas',
-        actions: 'Acciones',
-        supportedMaterials: 'Materiales Soportados y Aplicaciones de Corte',
-        glass: 'Vidrio',
-        glassDesc: 'Ventanas, divisiones, pantallas',
-        glassNote: 'Solo cortes guillotina rectos',
-        wood: 'Madera',
-        woodDesc: 'Paneles, puertas, estanterías',
-        woodNote: 'Optimizado para rendimiento de piezas',
-        metal: 'Metal',
-        metalDesc: 'Láminas de acero, aluminio',
-        metalNote: 'Minimiza desperdicio de material',
-        plastic: 'Plástico',
-        plasticDesc: 'Acrílico, policarbonato',
-        plasticNote: 'Optimización de corte limpio'
+        welcome: 'Bienvenido a tu Aplicación',
+        subtitle: 'Plantilla de Dashboard Moderno en React',
+        description:
+          'Esta es una plantilla de dashboard limpia y moderna construida con React, Material-UI, e incluye cambio de modo oscuro/claro y soporte multiidioma.',
+        mainContent: 'Área de Contenido Principal',
+        sidePanel: 'Panel Lateral',
+        emptyState: 'Tu contenido aparecerá aquí',
+        sidebarEmpty: 'El contenido del sidebar va aquí'
       },
 
       // New Planning

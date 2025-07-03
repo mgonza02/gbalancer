@@ -1,11 +1,11 @@
 {
-  "name": "gcut-cutting-planner",
-  "version": "1.0.0.1",
-  "homepage": "https://gfel.in/gcut",
+  "name": "modern-dashboard-template",
+  "version": "1.0.0",
+  "homepage": "https://your-domain.com",
   "author": {
-    "name": "Gonzalo Melgarejo",
-    "email": "gonzalo@gmdev.org",
-    "url": "https://gfel.in/gcut"
+    "name": "Your Name",
+    "email": "your-email@example.com",
+    "url": "https://your-domain.com"
   },
   "scripts": {
     "start": "vite",
