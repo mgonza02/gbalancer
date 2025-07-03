@@ -20,7 +20,6 @@ export const settings = {
   googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 };
 
-
 export const defaultBalancerConfig = {
   numSellers: 2,
   customers: 500,
@@ -29,7 +28,7 @@ export const defaultBalancerConfig = {
   maxTerritories: 60,
   maxCustomersPerPolygon: 55,
   minCustomersPerPolygon: 10,
-  maxSalesPerTerritory: 20000,
+  maxSalesPerTerritory: 20000
   /*
   For next version, we will add the following properties to the config:
   maxOversizedTerritories: 5,
