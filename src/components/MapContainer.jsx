@@ -65,10 +65,10 @@ const MapContainer = ({ customers, territories }) => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
         <Paper sx={{ p: 3, textAlign: 'center' }}>
-          <Typography variant="h6" color="error" gutterBottom>
+          <Typography variant='h6' color='error' gutterBottom>
             Error loading Google Maps
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant='body2' color='text.secondary'>
             Please check your Google Maps API key in the .env.local file
           </Typography>
         </Paper>
@@ -81,7 +81,7 @@ const MapContainer = ({ customers, territories }) => {
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
         <Box sx={{ textAlign: 'center' }}>
           <CircularProgress />
-          <Typography variant="body2" sx={{ mt: 2 }}>
+          <Typography variant='body2' sx={{ mt: 2 }}>
             Loading Google Maps...
           </Typography>
         </Box>
@@ -105,10 +105,7 @@ const MapContainer = ({ customers, territories }) => {
         }}
       >
         {/* Render customer markers */}
-        {customers &&
-          customers.map(customer => (
-            <MarkerF key={customer.id} position={customer.location} title={customer.name} />
-          ))}
+        {customers && customers.map(customer => <MarkerF key={customer.id} position={customer.location} title={customer.name} />)}
 
         {/* Render territory polygons */}
         {territories &&
@@ -141,35 +138,29 @@ const MapContainer = ({ customers, territories }) => {
         {activePolygon && (
           <InfoWindowF position={activePolygon.centroid} onCloseClick={() => setActivePolygon(null)}>
             <Box sx={{ p: 1, minWidth: 200 }}>
-              <Typography variant="h6" gutterBottom>
+              <Typography variant='h6' gutterBottom>
                 Territory {activePolygon.id}
               </Typography>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <People fontSize="small" />
-                <Typography variant="body2">{activePolygon.customerCount} customers</Typography>
+                <People fontSize='small' />
+                <Typography variant='body2'>{activePolygon.customerCount} customers</Typography>
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <LocationOn fontSize="small" />
-                <Typography variant="body2">
+                <LocationOn fontSize='small' />
+                <Typography variant='body2'>
                   Center: {activePolygon.centroid.lat.toFixed(4)}, {activePolygon.centroid.lng.toFixed(4)}
                 </Typography>
               </Box>
 
-              <Typography variant="body2" color="text.secondary" gutterBottom>
+              <Typography variant='body2' color='text.secondary' gutterBottom>
                 Customers in this territory:
               </Typography>
 
               <Box sx={{ maxHeight: 150, overflowY: 'auto' }}>
                 {activePolygon.customers.map(customer => (
-                  <Chip
-                    key={customer.id}
-                    label={customer.name}
-                    size="small"
-                    variant="outlined"
-                    sx={{ mr: 0.5, mb: 0.5 }}
-                  />
+                  <Chip key={customer.id} label={customer.name} size='small' variant='outlined' sx={{ mr: 0.5, mb: 0.5 }} />
                 ))}
               </Box>
             </Box>
@@ -189,7 +180,7 @@ const MapContainer = ({ customers, territories }) => {
             bgcolor: 'rgba(255, 255, 255, 0.95)'
           }}
         >
-          <Typography variant="subtitle2" gutterBottom>
+          <Typography variant='subtitle2' gutterBottom>
             Territories
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
@@ -208,7 +199,7 @@ const MapContainer = ({ customers, territories }) => {
                       border: '1px solid #fff'
                     }}
                   />
-                  <Typography variant="body2">
+                  <Typography variant='body2'>
                     Territory {territory.id} ({territory.customerCount})
                   </Typography>
                 </Box>

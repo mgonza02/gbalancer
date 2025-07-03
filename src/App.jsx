@@ -69,17 +69,17 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Container maxWidth="xl" sx={{ py: 2 }}>
+      <Container maxWidth='xl' sx={{ py: 2 }}>
         <Paper elevation={0} sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h3" component="h1" gutterBottom align="center">
+          <Typography variant='h3' component='h1' gutterBottom align='center'>
             Sales Territory Balancer
           </Typography>
-          <Typography variant="h6" color="text.secondary" align="center" gutterBottom>
+          <Typography variant='h6' color='text.secondary' align='center' gutterBottom>
             Create balanced, geographically clustered sales territories
           </Typography>
-          <Typography variant="body1" color="text.secondary" align="center">
-            Load customers onto a map, specify your sales team size and territory limits, then generate
-            optimized territories with automatic clustering.
+          <Typography variant='body1' color='text.secondary' align='center'>
+            Load customers onto a map, specify your sales team size and territory limits, then generate optimized territories with automatic
+            clustering.
           </Typography>
         </Paper>
 
@@ -107,7 +107,7 @@ function App() {
 
         {/* Footer */}
         <Box sx={{ mt: 4, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant='body2' color='text.secondary'>
             Showing {customers.length} customers across the San Francisco Bay Area
           </Typography>
         </Box>
