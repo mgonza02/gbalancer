@@ -1,0 +1,43 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.vscode-typescript-next",
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+    "ms-vscode.vscode-json",
+    "redhat.vscode-yaml",
+    "ms-vscode.vscode-css-peek",
+    "zignd.html-css-class-completion",
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.references-view",
+    "ms-vscode.npm-script-explorer",
+    "christian-kohler.npm-intellisense",
+    "wix.vscode-import-cost",
+    "ms-vscode.vscode-js-debug",
+    "ms-vscode.live-server",
+    "usernamehw.errorlens",
+    "gruntfuggly.todo-tree",
+    "alefragnani.bookmarks",
+    "ms-vscode.hexeditor",
+    "ms-vscode.vscode-github-issue-notebooks",
+    "github.vscode-github-actions",
+    "ms-vscode.remote-repositories",
+    "github.copilot",
+    "github.copilot-chat",
+    "dsznajder.es7-react-js-snippets",
+    "burkeholland.simple-react-snippets",
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+    "streetsidesoftware.code-spell-checker",
+    "formulahendry.auto-close-tag",
+    "aaron-bond.better-comments",
+    "ms-azuretools.vscode-docker",
+    "yzhang.markdown-all-in-one",
+    "PKief.material-icon-theme"
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript"
+  ]
+}

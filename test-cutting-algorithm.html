@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cutting Optimization Service Tests</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .summary {
+            margin-top: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🧪 Cutting Optimization Service Tests</h1>
+    <div id="test-results"></div>
+    <div id="summary" class="summary"></div>
+
+    <script type="module">
+        // Since we're in browser, we'll create a mock service first to test the structure
+        class MockCuttingOptimizationService {
+            constructor() {
+                this.maxSheetsLimit = 10;
+                this.guillotineCutCounter = 0;
+            }
+
+            expandPiecesToIndividualItems(pieces) {
+                const individualPieces = [];
+
+                pieces.forEach((piece, pieceIndex) => {
+                    if (piece.width && piece.height && piece.quantity) {
+                        const pieceWidth = parseFloat(piece.width);
+                        const pieceHeight = parseFloat(piece.height);
+                        const quantity = parseInt(piece.quantity);
+
+                        for (let instance = 0; instance < quantity; instance++) {
+                            individualPieces.push({
+                                pieceId: pieceIndex,
+                                instanceIndex: instance,
+                                width: pieceWidth,
+                                height: pieceHeight,
+                                isPlaced: false,
+                                originalPiece: piece
+                            });
+                        }
+                    }
+                });
+
+                return individualPieces;
+            }
+
+            generateOptimalLayout(pieces, sheetWidth, sheetHeight) {
+                // Simplified mock implementation for testing structure
+                const layout = [];
+                const individualPieces = this.expandPiecesToIndividualItems(pieces);
+
+                // Sort pieces by area (largest first)
+                individualPieces.sort((a, b) => (b.width * b.height) - (a.width * a.height));
+
+                let currentSheetIndex = 0;
+
+                while (individualPieces.some(piece => !piece.isPlaced) && currentSheetIndex < this.maxSheetsLimit) {
+                    const sheetLayout = {
+                        sheetNumber: currentSheetIndex + 1,
+                        placedPieces: [],
+                        guillotineCuts: [],
+                        totalGuillotineCuts: 0
+                    };
+
+                    // Simple placement algorithm for testing
+                    const unplacedPieces = individualPieces.filter(piece => !piece.isPlaced);
+                    let currentX = 0;
+                    let currentY = 0;
+                    let rowHeight = 0;
+
+                    for (const piece of unplacedPieces) {
+                        // Check if piece fits in current position
+                        let canPlace = false;
+                        let finalWidth = piece.width;
+                        let finalHeight = piece.height;
+                        let isRotated = false;
+
+                        // Try normal orientation
+                        if (currentX + piece.width <= sheetWidth && currentY + piece.height <= sheetHeight) {
+                            canPlace = true;
+                        }
+                        // Try rotated orientation
+                        else if (currentX + piece.height <= sheetWidth && currentY + piece.width <= sheetHeight) {
+                            canPlace = true;
+                            finalWidth = piece.height;
+                            finalHeight = piece.width;
+                            isRotated = true;
+                        }
+
+                        if (canPlace) {
+                            const placedPiece = {
+                                pieceId: piece.pieceId,
+                                instanceIndex: piece.instanceIndex,
+                                width: finalWidth,
+                                height: finalHeight,
+                                x: currentX,
+                                y: currentY,
+                                isRotated: isRotated,
+                                originalPiece: piece.originalPiece
+                            };
+
+                            sheetLayout.placedPieces.push(placedPiece);
+                            piece.isPlaced = true;
+
+                            // Update position for next piece
+                            currentX += finalWidth;
+                            rowHeight = Math.max(rowHeight, finalHeight);
+
+                            // Move to next row if needed
+                            if (currentX >= sheetWidth * 0.8) {
+                                currentX = 0;
+                                currentY += rowHeight;
+                                rowHeight = 0;
+                            }
+                        }
+                    }
+
+                    layout[currentSheetIndex] = sheetLayout;
+                    currentSheetIndex++;
+                }
+
+                return layout;
+            }
+        }
+
+        // Test Framework
+        class TestFramework {
+            constructor() {
+                this.tests = [];
+                this.passed = 0;
+                this.failed = 0;
+                this.results = [];
+            }
+
+            test(name, testFn) {
+                this.tests.push({ name, testFn });
+            }
+
+            expect(actual) {
+                return {
+                    toBe: (expected) => {
+                        if (actual !== expected) {
+                            throw new Error(`Expected ${expected}, but got ${actual}`);
+                        }
+                    },
+                    toBeLessThanOrEqual: (expected) => {
+                        if (actual > expected) {
+                            throw new Error(`Expected ${actual} to be less than or equal to ${expected}`);
+                        }
+                    },
+                    toHaveLength: (expected) => {
+                        if (actual.length !== expected) {
+                            throw new Error(`Expected length ${expected}, but got ${actual.length}`);
+                        }
+                    },
+                    toEqual: (expected) => {
+                        if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+                            throw new Error(`Expected ${JSON.stringify(expected)}, but got ${JSON.stringify(actual)}`);
+                        }
+                    }
+                };
+            }
+
+            async run() {
+                const resultsDiv = document.getElementById('test-results');
+                const summaryDiv = document.getElementById('summary');
+
+                for (const test of this.tests) {
+                    try {
+                        await test.testFn();
+                        this.passed++;
+                        this.results.push({ name: test.name, status: 'pass', error: null });
+
+                        const div = document.createElement('div');
+                        div.className = 'test-result pass';
+                        div.innerHTML = `✅ ${test.name}`;
+                        resultsDiv.appendChild(div);
+                    } catch (error) {
+                        this.failed++;
+                        this.results.push({ name: test.name, status: 'fail', error: error.message });
+
+                        const div = document.createElement('div');
+                        div.className = 'test-result fail';
+                        div.innerHTML = `❌ ${test.name}<br><pre>${error.message}</pre>`;
+                        resultsDiv.appendChild(div);
+                    }
+                }
+
+                summaryDiv.innerHTML = `
+                    <h2>📊 Test Summary</h2>
+                    <p><strong>Passed:</strong> ${this.passed}</p>
+                    <p><strong>Failed:</strong> ${this.failed}</p>
+                    <p><strong>Total:</strong> ${this.tests.length}</p>
+                    ${this.failed > 0 ? '<p style="color: red;">🚨 Some tests failed! There may be bugs in the algorithm.</p>' : '<p style="color: green;">🎉 All tests passed!</p>'}
+                `;
+            }
+        }
+
+        // Helper functions
+        const countTotalPlacedPieces = (layout) => {
+            return layout.reduce((total, sheet) => {
+                return total + (sheet.placedPieces ? sheet.placedPieces.length : 0);
+            }, 0);
+        };
+
+        const countTotalRequestedPieces = (pieces) => {
+            return pieces.reduce((total, piece) => {
+                return total + parseInt(piece.quantity || 0);
+            }, 0);
+        };
+
+        const verifyPlacementIntegrity = (layout, originalPieces) => {
+            const placedPiecesByOriginal = {};
+
+            layout.forEach(sheet => {
+                if (sheet.placedPieces) {
+                    sheet.placedPieces.forEach(placedPiece => {
+                        const key = `${placedPiece.pieceId}`;
+                        if (!placedPiecesByOriginal[key]) {
+                            placedPiecesByOriginal[key] = 0;
+                        }
+                        placedPiecesByOriginal[key]++;
+                    });
+                }
+            });
+
+            originalPieces.forEach((piece, index) => {
+                const key = `${index}`;
+                const placedCount = placedPiecesByOriginal[key] || 0;
+                const requestedCount = parseInt(piece.quantity || 0);
+
+                if (placedCount > requestedCount) {
+                    throw new Error(`Piece ${index} has ${placedCount} placed but only ${requestedCount} requested`);
+                }
+            });
+        };
+
+        // Initialize test framework and service
+        const framework = new TestFramework();
+        const service = new MockCuttingOptimizationService();
+
+        // Test Cases
+        framework.test('should never produce more pieces than requested - single piece type', () => {
+            const pieces = [
+                { width: 100, height: 50, quantity: 3 }
+            ];
+            const sheetWidth = 300;
+            const sheetHeight = 200;
+
+            const layout = service.generateOptimalLayout(pieces, sheetWidth, sheetHeight);
+
+            const totalPlaced = countTotalPlacedPieces(layout);
+            const totalRequested = countTotalRequestedPieces(pieces);
+
+            framework.expect(totalPlaced).toBeLessThanOrEqual(totalRequested);
+            framework.expect(totalPlaced).toBe(3);
+
+            verifyPlacementIntegrity(layout, pieces);
+        });
+
+        framework.test('should never produce more pieces than requested - multiple piece types', () => {
+            const pieces = [
+                { width: 50, height: 30, quantity: 2 },
+                { width: 80, height: 40, quantity: 1 },
+                { width: 20, height: 20, quantity: 4 }
+            ];
+            const sheetWidth = 200;
+            const sheetHeight = 150;
+
+            const layout = service.generateOptimalLayout(pieces, sheetWidth, sheetHeight);
+
+            const totalPlaced = countTotalPlacedPieces(layout);
+            const totalRequested = countTotalRequestedPieces(pieces);
+
+            framework.expect(totalPlaced).toBeLessThanOrEqual(totalRequested);
+            framework.expect(totalPlaced).toBe(7);
+
+            verifyPlacementIntegrity(layout, pieces);
+        });
+
+        framework.test('should not duplicate pieces in expansion phase', () => {
+            const pieces = [
+                { width: 25, height: 25, quantity: 4 }
+            ];
+
+            const individualPieces = service.expandPiecesToIndividualItems(pieces);
+
+            framework.expect(individualPieces).toHaveLength(4);
+
+            const instanceIndices = individualPieces.map(p => p.instanceIndex);
+            const uniqueIndices = [...new Set(instanceIndices)];
+            framework.expect(uniqueIndices).toHaveLength(4);
+            framework.expect(uniqueIndices.sort()).toEqual([0, 1, 2, 3]);
+        });
+
+        framework.test('should not place same piece multiple times', () => {
+            const pieces = [
+                { width: 30, height: 30, quantity: 3 }
+            ];
+            const sheetWidth = 100;
+            const sheetHeight = 100;
+
+            const layout = service.generateOptimalLayout(pieces, sheetWidth, sheetHeight);
+
+            const allPlacedPieces = layout.flatMap(sheet => sheet.placedPieces || []);
+            const placementKeys = allPlacedPieces.map(p => `${p.pieceId}-${p.instanceIndex}`);
+            const uniqueKeys = [...new Set(placementKeys)];
+
+            framework.expect(placementKeys).toHaveLength(uniqueKeys.length);
+            framework.expect(allPlacedPieces).toHaveLength(3);
+
+            verifyPlacementIntegrity(layout, pieces);
+        });
+
+        framework.test('should handle high quantity stress test', () => {
+            const pieces = [
+                { width: 10, height: 10, quantity: 50 }
+            ];
+            const sheetWidth = 100;
+            const sheetHeight = 100;
+
+            const layout = service.generateOptimalLayout(pieces, sheetWidth, sheetHeight);
+
+            const totalPlaced = countTotalPlacedPieces(layout);
+            const totalRequested = countTotalRequestedPieces(pieces);
+
+            framework.expect(totalPlaced).toBeLessThanOrEqual(totalRequested);
+            framework.expect(totalPlaced).toBe(50);
+
+            verifyPlacementIntegrity(layout, pieces);
+        });
+
+        // Run tests
+        framework.run();
+    </script>
+</body>
+
+</html>
