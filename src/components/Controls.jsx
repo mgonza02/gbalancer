@@ -20,6 +20,7 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
   const minCapacity = (controls.numSellers || 0) * (controls.minCustomersPerPolygon || 0);
   const minTerritories = (controls.numSellers || 0) * (controls.minTerritoriesPerSeller || 0);
   const maxSalesCapacity = controls.maxSalesPerTerritory > 0 ? (controls.numSellers || 0) * controls.maxSalesPerTerritory : 0;
+  const minSalesRequired = controls.minSalesPerTerritory > 0 ? (controls.numSellers || 0) * controls.minSalesPerTerritory : 0;
 
   const isValid =
     totalCapacity >= totalCustomers &&
@@ -32,8 +33,11 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
     controls.territorySize > 0 &&
     controls.maxTerritories > 0 &&
     controls.maxSalesPerTerritory > 0 &&
+    (controls.minSalesPerTerritory === 0 || controls.minSalesPerTerritory > 0) &&
+    (controls.minSalesPerTerritory === 0 || controls.minSalesPerTerritory <= controls.maxSalesPerTerritory) &&
     minTerritories <= controls.maxTerritories &&
-    (maxSalesCapacity === 0 || maxSalesCapacity >= totalSales);
+    (maxSalesCapacity === 0 || maxSalesCapacity >= totalSales) &&
+    (minSalesRequired === 0 || minSalesRequired <= totalSales);
 
   const getValidationMessage = () => {
     if (totalCapacity < totalCustomers) {
@@ -42,8 +46,14 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
     if (maxSalesCapacity > 0 && maxSalesCapacity < totalSales) {
       return '⚠ Insufficient sales capacity - increase sellers or max sales per territory';
     }
+    if (minSalesRequired > 0 && minSalesRequired > totalSales) {
+      return '⚠ Total sales insufficient for minimum requirements - reduce min sales per territory or increase customer sales';
+    }
     if (controls.minCustomersPerPolygon > controls.maxCustomersPerPolygon) {
       return '⚠ Minimum customers cannot exceed maximum customers';
+    }
+    if (controls.minSalesPerTerritory > 0 && controls.maxSalesPerTerritory > 0 && controls.minSalesPerTerritory > controls.maxSalesPerTerritory) {
+      return '⚠ Minimum sales per territory cannot exceed maximum sales per territory';
     }
     if (minCapacity > totalCustomers) {
       return '⚠ Minimum requirements exceed total customers - reduce min customers or sellers';
@@ -152,6 +162,18 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
             size='small'
             helperText='Maximum sales target per territory'
           />
+
+          <TextField
+            label='Min Sales per Territory'
+            type='number'
+            value={controls.minSalesPerTerritory || ''}
+            onChange={e => handleInputChange('minSalesPerTerritory', parseInt(e.target.value) || 0)}
+            inputProps={{ min: 0, max: 100000 }}
+            fullWidth
+            size='small'
+            helperText='Minimum sales target per territory (0 = no minimum)'
+            error={controls.minSalesPerTerritory > controls.maxSalesPerTerritory}
+          />
         </Box>
 
         {/* Capacity Summary */}
@@ -196,6 +218,13 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                 label={`$${maxSalesCapacity.toLocaleString()} Sales Capacity`}
                 size='small'
                 color={maxSalesCapacity >= totalSales ? 'success' : 'error'}
+              />
+            )}
+            {minSalesRequired > 0 && (
+              <Chip
+                label={`$${minSalesRequired.toLocaleString()} Min Sales Required`}
+                size='small'
+                color={minSalesRequired <= totalSales ? 'success' : 'warning'}
               />
             )}
           </Box>
