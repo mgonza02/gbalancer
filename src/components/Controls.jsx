@@ -1,6 +1,6 @@
 import { Assessment, AttachMoney, Business, Groups, History, LocationOn, People, Save, TrendingUp } from '@mui/icons-material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Card, CardContent, Chip, Divider, Stack, TextField, Typography } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Card, CardContent, Chip, Divider, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
 import BalanceHistory from './BalanceHistory';
 import SaveBalanceDialog from './SaveBalanceDialog';
@@ -290,79 +290,178 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
               alignItems: 'center',
               gap: 1,
               color: 'primary.main',
-              fontWeight: 600
+              fontWeight: 600,
+              mb: 2
             }}>
               <Assessment />
               Capacity Analysis
             </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-              <Chip
-                icon={<LocationOn />}
-                label={`${totalCustomers} Total Customers`}
-                size='medium'
-                color='primary'
-                sx={{ fontWeight: 500 }}
-              />
-              <Chip
-                icon={<People />}
-                label={`${totalCapacity} Max Capacity`}
-                size='medium'
-                color={isValid ? 'success' : 'error'}
-                sx={{ fontWeight: 500 }}
-              />
-              {controls.minCustomersPerPolygon > 0 && (
-                <Chip
-                  icon={<People />}
-                  label={`${minCapacity} Min Required`}
-                  size='medium'
-                  color={minCapacity <= totalCustomers ? 'success' : 'warning'}
-                  sx={{ fontWeight: 500 }}
-                />
-              )}
-              {controls.maxTerritories > 0 && (
-                <Chip
-                  label={`${controls.maxTerritories} Max Territories`}
-                  size='medium'
-                  color='info'
-                  sx={{ fontWeight: 500 }}
-                />
-              )}
-              {controls.minTerritoriesPerSeller > 0 && (
-                <Chip
-                  label={`${minTerritories} Min Territories`}
-                  size='medium'
-                  color={minTerritories <= controls.maxTerritories ? 'success' : 'warning'}
-                  sx={{ fontWeight: 500 }}
-                />
-              )}
-              {totalSales > 0 && (
-                <Chip
-                  icon={<AttachMoney />}
-                  label={`$${totalSales.toLocaleString()} Total Sales`}
-                  size='medium'
-                  color='info'
-                  sx={{ fontWeight: 500 }}
-                />
-              )}
-              {maxSalesCapacity > 0 && (
-                <Chip
-                  icon={<AttachMoney />}
-                  label={`$${maxSalesCapacity.toLocaleString()} Sales Capacity`}
-                  size='medium'
-                  color={maxSalesCapacity >= totalSales ? 'success' : 'error'}
-                  sx={{ fontWeight: 500 }}
-                />
-              )}
-              {minSalesRequired > 0 && (
-                <Chip
-                  icon={<AttachMoney />}
-                  label={`$${minSalesRequired.toLocaleString()} Min Sales Required`}
-                  size='medium'
-                  color={minSalesRequired <= totalSales ? 'success' : 'warning'}
-                  sx={{ fontWeight: 500 }}
-                />
-              )}
-            </Box>
+
+            <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 1 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: 'primary.50' }}>
+                    <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>Metric</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600, color: 'primary.main' }}>Value</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 600, color: 'primary.main' }}>Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <LocationOn color="primary" fontSize="small" />
+                        Total Customers
+                      </Box>
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 500 }}>
+                      {totalCustomers.toLocaleString()}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip label="Info" size="small" color="primary" />
+                    </TableCell>
+                  </TableRow>
+
+                  <TableRow>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <People color="primary" fontSize="small" />
+                        Max Capacity
+                      </Box>
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 500 }}>
+                      {totalCapacity.toLocaleString()}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip
+                        label={totalCapacity >= totalCustomers ? "Valid" : "Insufficient"}
+                        size="small"
+                        color={totalCapacity >= totalCustomers ? 'success' : 'error'}
+                      />
+                    </TableCell>
+                  </TableRow>
+
+                  {controls.minCustomersPerPolygon > 0 && (
+                    <TableRow>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <People color="warning" fontSize="small" />
+                          Min Required Customers
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 500 }}>
+                        {minCapacity.toLocaleString()}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label={minCapacity <= totalCustomers ? "Valid" : "Exceeds"}
+                          size="small"
+                          color={minCapacity <= totalCustomers ? 'success' : 'warning'}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  )}
+
+                  {controls.maxTerritories > 0 && (
+                    <TableRow>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Business color="info" fontSize="small" />
+                          Max Territories
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 500 }}>
+                        {controls.maxTerritories.toLocaleString()}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip label="Limit" size="small" color="info" />
+                      </TableCell>
+                    </TableRow>
+                  )}
+
+                  {controls.minTerritoriesPerSeller > 0 && (
+                    <TableRow>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Business color="warning" fontSize="small" />
+                          Min Territories Required
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 500 }}>
+                        {minTerritories.toLocaleString()}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label={minTerritories <= controls.maxTerritories ? "Valid" : "Exceeds"}
+                          size="small"
+                          color={minTerritories <= controls.maxTerritories ? 'success' : 'warning'}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  )}
+
+                  {totalSales > 0 && (
+                    <TableRow>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <AttachMoney color="info" fontSize="small" />
+                          Total Sales
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 500 }}>
+                        ${totalSales.toLocaleString()}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip label="Available" size="small" color="info" />
+                      </TableCell>
+                    </TableRow>
+                  )}
+
+                  {maxSalesCapacity > 0 && (
+                    <TableRow>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <AttachMoney color="primary" fontSize="small" />
+                          Sales Capacity
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 500 }}>
+                        ${maxSalesCapacity.toLocaleString()}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label={maxSalesCapacity >= totalSales ? "Sufficient" : "Insufficient"}
+                          size="small"
+                          color={maxSalesCapacity >= totalSales ? 'success' : 'error'}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  )}
+
+                  {minSalesRequired > 0 && (
+                    <TableRow>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <AttachMoney color="warning" fontSize="small" />
+                          Min Sales Required
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 500 }}>
+                        ${minSalesRequired.toLocaleString()}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label={minSalesRequired <= totalSales ? "Achievable" : "Insufficient"}
+                          size="small"
+                          color={minSalesRequired <= totalSales ? 'success' : 'warning'}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
             {totalCapacity > 0 && (
               <Box sx={{
                 mt: 2,
