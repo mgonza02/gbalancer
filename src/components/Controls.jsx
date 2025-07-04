@@ -78,30 +78,53 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
   };
 
   return (
-    <Card sx={{ mb: 2, borderRadius: 2, boxShadow: 2 }}>
-      <CardContent sx={{ p: 3 }}>
+    <Card sx={{
+      borderRadius: 3,
+      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+      border: '1px solid',
+      borderColor: 'divider',
+      height: 'fit-content'
+    }}>
+      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
         <Typography variant='h5' gutterBottom sx={{
           display: 'flex',
           alignItems: 'center',
           gap: 1,
           fontWeight: 600,
           color: 'primary.main',
-          mb: 3
+          mb: 3,
+          fontSize: { xs: '1.25rem', sm: '1.5rem' }
         }}>
           <TrendingUp />
           Territory Configuration
         </Typography>
 
         {/* Basic Configuration Section */}
-        <Accordion defaultExpanded sx={{ mb: 2, boxShadow: 1 }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Accordion defaultExpanded sx={{ mb: 2, boxShadow: 'none', border: 1, borderColor: 'divider' }}>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            sx={{
+              bgcolor: 'primary.50',
+              '&:hover': { bgcolor: 'primary.100' }
+            }}
+          >
+            <Typography variant='h6' sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              fontSize: { xs: '1rem', sm: '1.1rem' },
+              fontWeight: 600
+            }}>
               <Groups />
               Basic Settings
             </Typography>
           </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+          <AccordionDetails sx={{ pt: 2 }}>
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+              gap: { xs: 2, sm: 3 }
+            }}>
               <TextField
                 label='Number of Sellers'
                 type='number'
@@ -114,7 +137,8 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
-                    '&:hover fieldset': { borderColor: 'primary.main' }
+                    '&:hover fieldset': { borderColor: 'primary.main' },
+                    '&.Mui-focused fieldset': { borderWidth: 2 }
                   }
                 }}
               />
@@ -131,7 +155,8 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
-                    '&:hover fieldset': { borderColor: 'primary.main' }
+                    '&:hover fieldset': { borderColor: 'primary.main' },
+                    '&.Mui-focused fieldset': { borderWidth: 2 }
                   }
                 }}
               />
@@ -140,15 +165,31 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
         </Accordion>
 
         {/* Territory Constraints Section */}
-        <Accordion sx={{ mb: 2, boxShadow: 1 }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Accordion sx={{ mb: 2, boxShadow: 'none', border: 1, borderColor: 'divider' }}>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            sx={{
+              bgcolor: 'info.50',
+              '&:hover': { bgcolor: 'info.100' }
+            }}
+          >
+            <Typography variant='h6' sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              fontSize: { xs: '1rem', sm: '1.1rem' },
+              fontWeight: 600
+            }}>
               <Business />
               Territory Constraints
             </Typography>
           </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+          <AccordionDetails sx={{ pt: 2 }}>
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+              gap: { xs: 2, sm: 3 }
+            }}>
               <TextField
                 label='Territory Size'
                 type='number'
@@ -161,7 +202,8 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
-                    '&:hover fieldset': { borderColor: 'primary.main' }
+                    '&:hover fieldset': { borderColor: 'primary.main' },
+                    '&.Mui-focused fieldset': { borderWidth: 2 }
                   }
                 }}
               />
@@ -178,7 +220,8 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
-                    '&:hover fieldset': { borderColor: 'primary.main' }
+                    '&:hover fieldset': { borderColor: 'primary.main' },
+                    '&.Mui-focused fieldset': { borderWidth: 2 }
                   }
                 }}
               />
@@ -187,15 +230,31 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
         </Accordion>
 
         {/* Customer Distribution Section */}
-        <Accordion sx={{ mb: 2, boxShadow: 1 }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Accordion sx={{ mb: 2, boxShadow: 'none', border: 1, borderColor: 'divider' }}>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            sx={{
+              bgcolor: 'success.50',
+              '&:hover': { bgcolor: 'success.100' }
+            }}
+          >
+            <Typography variant='h6' sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              fontSize: { xs: '1rem', sm: '1.1rem' },
+              fontWeight: 600
+            }}>
               <People />
               Customer Distribution
             </Typography>
           </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+          <AccordionDetails sx={{ pt: 2 }}>
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+              gap: { xs: 2, sm: 3 }
+            }}>
               <TextField
                 label='Max Customers per Territory'
                 type='number'
@@ -208,7 +267,8 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
-                    '&:hover fieldset': { borderColor: 'primary.main' }
+                    '&:hover fieldset': { borderColor: 'primary.main' },
+                    '&.Mui-focused fieldset': { borderWidth: 2 }
                   }
                 }}
               />
@@ -226,7 +286,8 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
-                    '&:hover fieldset': { borderColor: 'primary.main' }
+                    '&:hover fieldset': { borderColor: 'primary.main' },
+                    '&.Mui-focused fieldset': { borderWidth: 2 }
                   }
                 }}
               />
@@ -235,15 +296,31 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
         </Accordion>
 
         {/* Sales Targets Section */}
-        <Accordion sx={{ mb: 3, boxShadow: 1 }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Accordion sx={{ mb: 3, boxShadow: 'none', border: 1, borderColor: 'divider' }}>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            sx={{
+              bgcolor: 'warning.50',
+              '&:hover': { bgcolor: 'warning.100' }
+            }}
+          >
+            <Typography variant='h6' sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              fontSize: { xs: '1rem', sm: '1.1rem' },
+              fontWeight: 600
+            }}>
               <AttachMoney />
               Sales Targets
             </Typography>
           </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+          <AccordionDetails sx={{ pt: 2 }}>
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+              gap: { xs: 2, sm: 3 }
+            }}>
               <TextField
                 label='Max Sales per Territory'
                 type='number'
@@ -256,7 +333,8 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
-                    '&:hover fieldset': { borderColor: 'primary.main' }
+                    '&:hover fieldset': { borderColor: 'primary.main' },
+                    '&.Mui-focused fieldset': { borderWidth: 2 }
                   }
                 }}
               />
@@ -274,7 +352,8 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
-                    '&:hover fieldset': { borderColor: 'primary.main' }
+                    '&:hover fieldset': { borderColor: 'primary.main' },
+                    '&.Mui-focused fieldset': { borderWidth: 2 }
                   }
                 }}
               />
@@ -490,26 +569,33 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
           size='large'
           sx={{
             mb: 3,
-            py: 1.5,
-            borderRadius: 2,
+            py: { xs: 1.5, sm: 2 },
+            borderRadius: 3,
             fontWeight: 600,
-            fontSize: '1.1rem',
-            boxShadow: 3,
+            fontSize: { xs: '1rem', sm: '1.1rem' },
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
             '&:hover': {
-              boxShadow: 6,
-              transform: 'translateY(-1px)'
+              boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
+              transform: 'translateY(-2px)',
+              background: 'linear-gradient(45deg, #1565c0 30%, #2196f3 90%)'
             },
             '&:disabled': {
-              boxShadow: 1
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              transform: 'none'
             },
-            transition: 'all 0.2s ease-in-out'
+            transition: 'all 0.3s ease-in-out'
           }}
         >
           {loading ? 'Generating Territories...' : 'Generate Territories'}
         </Button>
 
         {/* Action Buttons */}
-        <Stack direction='row' spacing={2} sx={{ mb: 3 }}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+          sx={{ mb: 3 }}
+        >
           <Button
             variant='outlined'
             startIcon={<Save />}
@@ -518,12 +604,18 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
             fullWidth
             size='large'
             sx={{
-              py: 1.2,
-              borderRadius: 2,
+              py: { xs: 1.2, sm: 1.5 },
+              borderRadius: 3,
               fontWeight: 500,
+              fontSize: { xs: '0.9rem', sm: '1rem' },
+              borderWidth: 2,
               '&:hover': {
                 transform: 'translateY(-1px)',
-                boxShadow: 2
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                borderWidth: 2
+              },
+              '&:disabled': {
+                transform: 'none'
               },
               transition: 'all 0.2s ease-in-out'
             }}
@@ -538,12 +630,18 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
             fullWidth
             size='large'
             sx={{
-              py: 1.2,
-              borderRadius: 2,
+              py: { xs: 1.2, sm: 1.5 },
+              borderRadius: 3,
               fontWeight: 500,
+              fontSize: { xs: '0.9rem', sm: '1rem' },
+              borderWidth: 2,
               '&:hover': {
                 transform: 'translateY(-1px)',
-                boxShadow: 2
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                borderWidth: 2
+              },
+              '&:disabled': {
+                transform: 'none'
               },
               transition: 'all 0.2s ease-in-out'
             }}
@@ -557,9 +655,13 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
             severity='error'
             sx={{
               mb: 3,
-              borderRadius: 2,
+              borderRadius: 3,
+              fontSize: { xs: '0.85rem', sm: '0.875rem' },
               '& .MuiAlert-message': {
                 fontWeight: 500
+              },
+              '& .MuiAlert-icon': {
+                fontSize: { xs: '1.2rem', sm: '1.5rem' }
               }
             }}
           >
@@ -568,19 +670,37 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
         )}
 
         {territories && territories.length > 0 && (
-          <Card sx={{ mt: 2, borderRadius: 2, bgcolor: 'success.50', border: 1, borderColor: 'success.200' }}>
-            <CardContent sx={{ p: 3 }}>
+          <Card sx={{
+            mt: 2,
+            borderRadius: 3,
+            bgcolor: 'success.50',
+            border: 1,
+            borderColor: 'success.200',
+            boxShadow: '0 4px 12px rgba(76, 175, 80, 0.15)'
+          }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography variant='h6' gutterBottom sx={{
                 fontWeight: 600,
                 color: 'success.800',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1
+                gap: 1,
+                fontSize: { xs: '1.1rem', sm: '1.25rem' }
               }}>
                 <Assessment />
                 Territory Summary
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+
+              {/* Territory Cards - Responsive Grid */}
+              <Box sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: 'repeat(auto-fit, minmax(300px, 1fr))'
+                },
+                gap: 2,
+                mb: 3
+              }}>
                 {territories.map(territory => {
                   const isAtMin = controls.minCustomersPerPolygon > 0 && territory.customerCount === controls.minCustomersPerPolygon;
                   const isAtMax = territory.customerCount === controls.maxCustomersPerPolygon;
@@ -593,37 +713,53 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                       key={territory.id}
                       sx={{
                         display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
                         justifyContent: 'space-between',
-                        alignItems: 'center',
-                        flexWrap: 'wrap',
+                        alignItems: { xs: 'flex-start', sm: 'center' },
                         gap: 2,
-                        p: 2,
+                        p: { xs: 2, sm: 3 },
                         bgcolor: 'background.paper',
-                        borderRadius: 2,
+                        borderRadius: 3,
                         border: 1,
                         borderColor: 'divider',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                         '&:hover': {
-                          boxShadow: 2,
-                          borderColor: 'primary.main'
+                          boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                          borderColor: 'primary.main',
+                          transform: 'translateY(-2px)'
                         },
-                        transition: 'all 0.2s ease-in-out'
+                        transition: 'all 0.3s ease-in-out'
                       }}
                     >
-                      <Typography variant='subtitle1' sx={{ fontWeight: 600, color: 'primary.main' }}>
+                      <Typography variant='subtitle1' sx={{
+                        fontWeight: 600,
+                        color: 'primary.main',
+                        fontSize: { xs: '1rem', sm: '1.1rem' }
+                      }}>
                         Territory {territory.id}
                       </Typography>
-                      <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                      <Box sx={{
+                        display: 'flex',
+                        gap: 1.5,
+                        flexWrap: 'wrap',
+                        justifyContent: { xs: 'flex-start', sm: 'flex-end' }
+                      }}>
                         <Chip
-                          icon={<People />}
+                          icon={<People fontSize="small" />}
                           label={`${territory.customerCount} customers`}
                           size='medium'
                           color={isAtMin || isAtMax ? 'warning' : 'primary'}
                           variant='outlined'
-                          sx={{ fontWeight: 500 }}
+                          sx={{
+                            fontWeight: 500,
+                            '& .MuiChip-icon': {
+                              fontSize: { xs: '0.8rem', sm: '1rem' }
+                            }
+                          }}
                         />
                         {territory.totalSales && (
                           <Chip
-                            icon={<AttachMoney />}
+                            icon={<AttachMoney fontSize="small" />}
                             label={`$${territory.totalSales.toLocaleString()}`}
                             size='medium'
                             color={
@@ -632,7 +768,12 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                               isNearSalesLimit ? 'warning' : 'success'
                             }
                             variant='outlined'
-                            sx={{ fontWeight: 500 }}
+                            sx={{
+                              fontWeight: 500,
+                              '& .MuiChip-icon': {
+                                fontSize: { xs: '0.8rem', sm: '1rem' }
+                              }
+                            }}
                           />
                         )}
                       </Box>
@@ -640,29 +781,63 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                   );
                 })}
               </Box>
-              <Divider sx={{ my: 2 }} />
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-                <Box>
-                  <Typography variant='body2' color='success.800' sx={{ fontWeight: 600 }}>
-                    📊 Territories: {territories.length}
+
+              <Divider sx={{ my: 3 }} />
+
+              {/* Summary Statistics */}
+              <Box sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(auto-fit, minmax(250px, 1fr))' },
+                gap: 3
+              }}>
+                <Box sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  bgcolor: 'background.paper',
+                  border: 1,
+                  borderColor: 'divider'
+                }}>
+                  <Typography variant='body2' color='success.800' sx={{
+                    fontWeight: 600,
+                    mb: 1,
+                    fontSize: { xs: '0.85rem', sm: '0.875rem' }
+                  }}>
+                    📊 Territory Overview
                   </Typography>
-                  <Typography variant='body2' color='success.700'>
+                  <Typography variant='body2' color='success.700' sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
                     👥 Total Customers: {territories.reduce((sum, t) => sum + t.customerCount, 0)}
                   </Typography>
-                  <Typography variant='body2' color='success.700'>
+                  <Typography variant='body2' color='success.700' sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                    🏢 Territories: {territories.length}
+                  </Typography>
+                  <Typography variant='body2' color='success.700' sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
                     📈 Customer Range: {Math.min(...territories.map(t => t.customerCount))} - {Math.max(...territories.map(t => t.customerCount))} per territory
                   </Typography>
                 </Box>
+
                 {territories.some(t => t.totalSales) && (
-                  <Box>
-                    <Typography variant='body2' color='success.800' sx={{ fontWeight: 600 }}>
-                      💰 Total Sales: ${territories.reduce((sum, t) => sum + (t.totalSales || 0), 0).toLocaleString()}
+                  <Box sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: 'background.paper',
+                    border: 1,
+                    borderColor: 'divider'
+                  }}>
+                    <Typography variant='body2' color='success.800' sx={{
+                      fontWeight: 600,
+                      mb: 1,
+                      fontSize: { xs: '0.85rem', sm: '0.875rem' }
+                    }}>
+                      💰 Sales Overview
                     </Typography>
-                    <Typography variant='body2' color='success.700'>
-                      📊 Sales Range: ${Math.min(...territories.map(t => t.totalSales || 0)).toLocaleString()} - ${Math.max(...territories.map(t => t.totalSales || 0)).toLocaleString()}
+                    <Typography variant='body2' color='success.700' sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                      📊 Total Sales: ${territories.reduce((sum, t) => sum + (t.totalSales || 0), 0).toLocaleString()}
                     </Typography>
-                    <Typography variant='body2' color='success.700'>
-                      📈 Avg Sales/Territory: ${Math.round(territories.reduce((sum, t) => sum + (t.totalSales || 0), 0) / territories.length).toLocaleString()}
+                    <Typography variant='body2' color='success.700' sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                      � Sales Range: ${Math.min(...territories.map(t => t.totalSales || 0)).toLocaleString()} - ${Math.max(...territories.map(t => t.totalSales || 0)).toLocaleString()}
+                    </Typography>
+                    <Typography variant='body2' color='success.700' sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                      � Avg Sales/Territory: ${Math.round(territories.reduce((sum, t) => sum + (t.totalSales || 0), 0) / territories.length).toLocaleString()}
                     </Typography>
                   </Box>
                 )}

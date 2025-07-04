@@ -224,12 +224,33 @@ const MapContainer = ({ customers, territories }) => {
   if (loadError) {
     console.error('Google Maps API load error:', loadError);
     return (
-      <Box sx={{ height: '600px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <Paper sx={{ p: 3, textAlign: 'center', maxWidth: 500 }}>
-          <Alert severity='error' sx={{ mb: 2 }}>
+      <Box sx={{
+        height: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        p: { xs: 2, sm: 3 }
+      }}>
+        <Paper sx={{
+          p: { xs: 2, sm: 3 },
+          textAlign: 'center',
+          maxWidth: 500,
+          borderRadius: 3,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+        }}>
+          <Alert
+            severity='error'
+            sx={{
+              mb: 2,
+              borderRadius: 2,
+              fontSize: { xs: '0.85rem', sm: '0.875rem' }
+            }}
+          >
             Failed to load Google Maps
           </Alert>
-          <Typography variant='body2' color='text.secondary'>
+          <Typography variant='body2' color='text.secondary' sx={{
+            fontSize: { xs: '0.8rem', sm: '0.875rem' }
+          }}>
             Please check your Google Maps API key and ensure it has the necessary permissions.
           </Typography>
         </Paper>
@@ -240,19 +261,51 @@ const MapContainer = ({ customers, territories }) => {
   // Loading state
   if (!isLoaded) {
     return (
-      <Box sx={{ height: '600px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <CircularProgress size={48} />
-          <Typography variant='body2' sx={{ mt: 2 }}>
-            Loading Google Maps...
-          </Typography>
-        </Box>
+      <Box sx={{
+        height: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        bgcolor: 'background.paper'
+      }}>
+        <Fade in={true}>
+          <Box sx={{ textAlign: 'center' }}>
+            <CircularProgress
+              size={60}
+              thickness={4}
+              sx={{
+                color: 'primary.main',
+                mb: 2
+              }}
+            />
+            <Typography variant='h6' sx={{
+              mt: 2,
+              color: 'text.primary',
+              fontWeight: 500,
+              fontSize: { xs: '1rem', sm: '1.25rem' }
+            }}>
+              Loading Google Maps...
+            </Typography>
+            <Typography variant='body2' color='text.secondary' sx={{
+              mt: 1,
+              fontSize: { xs: '0.8rem', sm: '0.875rem' }
+            }}>
+              Please wait while we initialize the map
+            </Typography>
+          </Box>
+        </Fade>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ height: '600px', width: '100%', position: 'relative' }}>
+    <Box sx={{
+      height: '100%',
+      width: '100%',
+      position: 'relative',
+      borderRadius: 'inherit',
+      overflow: 'hidden'
+    }}>
       <GoogleMap
         ref={mapRef}
         mapContainerStyle={{ height: '100%', width: '100%' }}
@@ -421,39 +474,68 @@ const MapContainer = ({ customers, territories }) => {
         )}
       </GoogleMap>
 
-      {/* Enhanced map controls */}
-      <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
+      {/* Enhanced responsive map controls */}
+      <Box sx={{
+        position: 'absolute',
+        top: { xs: 12, sm: 16 },
+        left: { xs: 12, sm: 16 },
+        zIndex: 10
+      }}>
         <Tooltip title='Fit all territories'>
           <IconButton
             onClick={fitBounds}
             sx={{
               bgcolor: 'background.paper',
-              boxShadow: 2,
-              '&:hover': { bgcolor: 'action.hover' }
+              boxShadow: 3,
+              width: { xs: 44, sm: 48 },
+              height: { xs: 44, sm: 48 },
+              '&:hover': {
+                bgcolor: 'action.hover',
+                transform: 'scale(1.05)'
+              },
+              transition: 'all 0.2s ease-in-out'
             }}
           >
-            <ZoomOutMap />
+            <ZoomOutMap fontSize={window.innerWidth < 600 ? 'small' : 'medium'} />
           </IconButton>
         </Tooltip>
       </Box>
 
-      {/* Enhanced map legend */}
+      {/* Enhanced responsive map legend */}
       {territories && territories.length > 0 && (
         <Fade in={true} timeout={500}>
           <Paper
-            elevation={3}
+            elevation={4}
             sx={{
               position: 'absolute',
-              top: 16,
-              right: 16,
-              p: 2,
-              maxWidth: 280,
+              top: { xs: 12, sm: 16 },
+              right: { xs: 12, sm: 16 },
+              p: { xs: 1.5, sm: 2 },
+              maxWidth: { xs: 250, sm: 320 },
+              maxHeight: { xs: '50vh', sm: '60vh' },
               bgcolor: 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(10px)',
-              borderRadius: 2
+              borderRadius: 3,
+              overflowY: 'auto',
+              '&::-webkit-scrollbar': {
+                width: '6px',
+              },
+              '&::-webkit-scrollbar-track': {
+                bgcolor: 'grey.100',
+                borderRadius: '10px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                bgcolor: 'grey.400',
+                borderRadius: '10px',
+                '&:hover': {
+                  bgcolor: 'grey.600',
+                },
+              },
             }}
           >
-            <Typography variant='subtitle2' gutterBottom fontWeight='bold'>
+            <Typography variant='subtitle2' gutterBottom fontWeight='bold' sx={{
+              fontSize: { xs: '0.85rem', sm: '0.95rem' }
+            }}>
               Territory Legend
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
