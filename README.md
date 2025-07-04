@@ -1,9 +1,6 @@
-# Sales Territory Balancer
+# GBalancer
 
-A React web application for creati2. **Set Parameters**:
-   - **Number of Sellers**: How many sales territories to create (1-20)
-   - **Max Customers per Territory**: Maximum customers any single seller should handle (1-100)
-   - **Min Customers per Territory**: Minimum customers per territory (0 = no minimum)and visualizing balanced sales force territories on a Google Map. This application serves as a planning tool for sales managers to automatically partition customers into balanced, geographically clustered polygons (territories).
+**Territory Balancer** - A React web application for creating and visualizing balanced sales force territories on a Google Map. This application serves as a planning tool for sales managers to automatically partition customers into balanced, geographically clustered polygons (territories).
 
 ## Features
 

@@ -135,7 +135,7 @@ const Navigation = () => {
                 fontSize: { xs: '1.1rem', sm: '1.25rem' }
               }}
             >
-              Territory Balancer
+              GBalancer
             </Typography>
           </Box>
 

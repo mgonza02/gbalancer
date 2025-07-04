@@ -76,7 +76,19 @@ const Home = () => {
               mb: 3
             }}
           >
-            Sales Territory Balancer
+            GBalancer
+          </Typography>
+          <Typography
+            variant='h4'
+            sx={{
+              mb: 2,
+              fontSize: { xs: '1.1rem', sm: '1.3rem' },
+              opacity: 0.95,
+              fontWeight: 500,
+              letterSpacing: '0.5px'
+            }}
+          >
+            Territory Balancer
           </Typography>
           <Typography
             variant='h5'

@@ -29,7 +29,7 @@ const Footer = () => {
               textAlign: { xs: 'center', sm: 'left' }
             }}
           >
-            © 2025 Sales Territory Balancer. All rights reserved.
+            © 2025 GBalancer. All rights reserved.
           </Typography>
 
           <Box sx={{

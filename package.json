@@ -1,6 +1,7 @@
 {
-  "name": "modern-dashboard-template",
+  "name": "gbalancer",
   "version": "1.0.0",
+  "description": "Territory Balancer - Create balanced, geographically clustered sales territories with intelligent automation",
   "homepage": "https://your-domain.com",
   "author": {
     "name": "Your Name",
