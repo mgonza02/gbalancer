@@ -2,12 +2,12 @@ import { Assessment, AttachMoney, Business, Groups, History, LocationOn, People,
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Card, CardContent, Chip, Divider, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
-import BalanceHistory from './BalanceHistory';
+import { useNavigate } from 'react-router-dom';
 import SaveBalanceDialog from './SaveBalanceDialog';
 
 const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, territories, customers, loading, onLoadBalance }) => {
+  const navigate = useNavigate();
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
-  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const handleInputChange = (field, value) => {
     onControlsChange({
       ...controls,
@@ -626,7 +626,7 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
           <Button
             variant='outlined'
             startIcon={<History />}
-            onClick={() => setHistoryDialogOpen(true)}
+            onClick={() => navigate('/history')}
             fullWidth
             size='large'
             sx={{
@@ -854,16 +854,6 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
         customers={customers}
         territories={territories}
         controls={controls}
-      />
-
-      {/* Balance History Dialog */}
-      <BalanceHistory
-        open={historyDialogOpen}
-        onClose={() => setHistoryDialogOpen(false)}
-        onLoadBalance={onLoadBalance}
-        currentBalance={controls}
-        customers={customers}
-        territories={territories}
       />
     </Card>
   );
