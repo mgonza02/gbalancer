@@ -15,9 +15,11 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
   };
 
   const totalCustomers = customers?.length || 0;
+  const totalSales = customers?.reduce((sum, customer) => sum + (customer.sales || 0), 0) || 0;
   const totalCapacity = (controls.numSellers || 0) * (controls.maxCustomersPerPolygon || 0);
   const minCapacity = (controls.numSellers || 0) * (controls.minCustomersPerPolygon || 0);
   const minTerritories = (controls.numSellers || 0) * (controls.minTerritoriesPerSeller || 0);
+  const maxSalesCapacity = controls.maxSalesPerTerritory > 0 ? (controls.numSellers || 0) * controls.maxSalesPerTerritory : 0;
 
   const isValid =
     totalCapacity >= totalCustomers &&
@@ -30,11 +32,15 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
     controls.territorySize > 0 &&
     controls.maxTerritories > 0 &&
     controls.maxSalesPerTerritory > 0 &&
-    minTerritories <= controls.maxTerritories;
+    minTerritories <= controls.maxTerritories &&
+    (maxSalesCapacity === 0 || maxSalesCapacity >= totalSales);
 
   const getValidationMessage = () => {
     if (totalCapacity < totalCustomers) {
       return '⚠ Insufficient max capacity - increase sellers or max customers';
+    }
+    if (maxSalesCapacity > 0 && maxSalesCapacity < totalSales) {
+      return '⚠ Insufficient sales capacity - increase sellers or max sales per territory';
     }
     if (controls.minCustomersPerPolygon > controls.maxCustomersPerPolygon) {
       return '⚠ Minimum customers cannot exceed maximum customers';
@@ -178,6 +184,20 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                 color={minTerritories <= controls.maxTerritories ? 'success' : 'warning'}
               />
             )}
+            {totalSales > 0 && (
+              <Chip
+                label={`$${totalSales.toLocaleString()} Total Sales`}
+                size='small'
+                color='info'
+              />
+            )}
+            {maxSalesCapacity > 0 && (
+              <Chip
+                label={`$${maxSalesCapacity.toLocaleString()} Sales Capacity`}
+                size='small'
+                color={maxSalesCapacity >= totalSales ? 'success' : 'error'}
+              />
+            )}
           </Box>
           {totalCapacity > 0 && (
             <Typography variant='body2' color='text.secondary' sx={{ mt: 1 }}>
@@ -222,16 +242,28 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
               {territories.map(territory => {
                 const isAtMin = controls.minCustomersPerPolygon > 0 && territory.customerCount === controls.minCustomersPerPolygon;
                 const isAtMax = territory.customerCount === controls.maxCustomersPerPolygon;
+                const isOverSales = controls.maxSalesPerTerritory > 0 && territory.totalSales > controls.maxSalesPerTerritory;
+                const isNearSalesLimit = controls.maxSalesPerTerritory > 0 && territory.totalSales > controls.maxSalesPerTerritory * 0.9;
 
                 return (
-                  <Box key={territory.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box key={territory.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
                     <Typography variant='body2'>Territory {territory.id}</Typography>
-                    <Chip
-                      label={`${territory.customerCount} customers`}
-                      size='small'
-                      color={isAtMin || isAtMax ? 'warning' : 'primary'}
-                      variant='outlined'
-                    />
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      <Chip
+                        label={`${territory.customerCount} customers`}
+                        size='small'
+                        color={isAtMin || isAtMax ? 'warning' : 'primary'}
+                        variant='outlined'
+                      />
+                      {territory.totalSales && (
+                        <Chip
+                          label={`$${territory.totalSales.toLocaleString()}`}
+                          size='small'
+                          color={isOverSales ? 'error' : isNearSalesLimit ? 'warning' : 'success'}
+                          variant='outlined'
+                        />
+                      )}
+                    </Box>
                   </Box>
                 );
               })}
@@ -243,6 +275,12 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                   {' '}
                   • Range: {Math.min(...territories.map(t => t.customerCount))} - {Math.max(...territories.map(t => t.customerCount))}{' '}
                   customers per territory
+                </span>
+              )}
+              {territories.some(t => t.totalSales) && (
+                <span>
+                  {' '}
+                  • Sales: ${Math.min(...territories.map(t => t.totalSales || 0)).toLocaleString()} - ${Math.max(...territories.map(t => t.totalSales || 0)).toLocaleString()} per territory
                 </span>
               )}
             </Typography>

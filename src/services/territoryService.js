@@ -3,14 +3,26 @@ import { kmeans } from 'ml-kmeans';
 
 /**
  * Generates balanced territories using K-means clustering and convex hull calculation
- * @param {Array} customers - Array of customer objects with id, name, and location
+ * @param {Array} customers - Array of customer objects with id, name, location, and sales
  * @param {Object} options - Configuration options
  * @param {number} options.numSellers - Number of sellers (territories)
  * @param {number} options.maxCustomersPerPolygon - Maximum customers per territory
  * @param {number} options.minCustomersPerPolygon - Minimum customers per territory
+ * @param {number} options.maxSalesPerTerritory - Maximum sales per territory
+ * @param {number} options.minTerritoriesPerSeller - Minimum territories per seller
+ * @param {number} options.territorySize - Territory size (geographic area)
+ * @param {number} options.maxTerritories - Maximum total territories
  * @returns {Object} - Either success object with territories or error object
  */
-export const generateTerritories = async (customers, { numSellers, maxCustomersPerPolygon, minCustomersPerPolygon = 0 }) => {
+export const generateTerritories = async (customers, {
+  numSellers,
+  maxCustomersPerPolygon,
+  minCustomersPerPolygon = 0,
+  maxSalesPerTerritory = 0,
+  minTerritoriesPerSeller = 0,
+  territorySize = 0,
+  maxTerritories = 0
+}) => {
   // Input validation
   if (!customers || customers.length === 0) {
     return { error: 'No customers provided' };
@@ -30,6 +42,30 @@ export const generateTerritories = async (customers, { numSellers, maxCustomersP
 
   if (minCustomersPerPolygon > maxCustomersPerPolygon) {
     return { error: 'Min customers per territory cannot exceed max customers per territory' };
+  }
+
+  if (maxSalesPerTerritory && maxSalesPerTerritory <= 0) {
+    return { error: 'Max sales per territory must be greater than 0' };
+  }
+
+  if (minTerritoriesPerSeller && minTerritoriesPerSeller <= 0) {
+    return { error: 'Min territories per seller must be greater than 0' };
+  }
+
+  if (territorySize && territorySize <= 0) {
+    return { error: 'Territory size must be greater than 0' };
+  }
+
+  if (maxTerritories && maxTerritories <= 0) {
+    return { error: 'Max territories must be greater than 0' };
+  }
+
+  // Validate that customers have sales data if maxSalesPerTerritory is specified
+  if (maxSalesPerTerritory > 0) {
+    const customersWithoutSales = customers.filter(customer => !customer.sales || customer.sales <= 0);
+    if (customersWithoutSales.length > 0) {
+      return { error: 'All customers must have valid sales data when max sales per territory is specified' };
+    }
   }
 
   // Check if it's mathematically possible to assign all customers
@@ -60,9 +96,11 @@ export const generateTerritories = async (customers, { numSellers, maxCustomersP
       customerGroups[clusterIndex].push(customers[customerIndex]);
     });
 
-    // Validate cluster sizes
+    // Validate cluster sizes and sales constraints
     const oversizedClusters = [];
     const undersizedClusters = [];
+    const oversalesClusters = [];
+
     Object.entries(customerGroups).forEach(([clusterIndex, customerGroup]) => {
       if (customerGroup.length > maxCustomersPerPolygon) {
         oversizedClusters.push({
@@ -76,6 +114,18 @@ export const generateTerritories = async (customers, { numSellers, maxCustomersP
           customerCount: customerGroup.length
         });
       }
+
+      // Check sales constraints if maxSalesPerTerritory is specified
+      if (maxSalesPerTerritory > 0 && customerGroup.length > 0) {
+        const totalSales = customerGroup.reduce((sum, customer) => sum + (customer.sales || 0), 0);
+        if (totalSales > maxSalesPerTerritory) {
+          oversalesClusters.push({
+            territoryId: parseInt(clusterIndex) + 1,
+            totalSales: totalSales,
+            customerCount: customerGroup.length
+          });
+        }
+      }
     });
 
     if (oversizedClusters.length > 0) {
@@ -87,6 +137,15 @@ export const generateTerritories = async (customers, { numSellers, maxCustomersP
       };
     }
 
+    if (oversalesClusters.length > 0) {
+      const oversalesDetails = oversalesClusters
+        .map(cluster => `Territory ${cluster.territoryId} has $${cluster.totalSales.toLocaleString()} in sales (${cluster.customerCount} customers)`)
+        .join(', ');
+      return {
+        error: `Automated clustering resulted in territories exceeding sales limits (${oversalesDetails}). Max allowed: $${maxSalesPerTerritory.toLocaleString()}. Please adjust parameters or review customer distribution.`
+      };
+    }
+
     if (undersizedClusters.length > 0) {
       console.log('Initial clustering resulted in undersized territories, attempting rebalancing...');
       const rebalancedGroups = await rebalanceTerritories(
@@ -94,7 +153,8 @@ export const generateTerritories = async (customers, { numSellers, maxCustomersP
         coordinates,
         kmeansResult.centroids,
         minCustomersPerPolygon,
-        maxCustomersPerPolygon
+        maxCustomersPerPolygon,
+        maxSalesPerTerritory
       );
 
       if (rebalancedGroups.error) {
@@ -107,6 +167,8 @@ export const generateTerritories = async (customers, { numSellers, maxCustomersP
       // Re-validate after rebalancing
       const finalOversized = [];
       const finalUndersized = [];
+      const finalOversales = [];
+
       Object.entries(customerGroups).forEach(([clusterIndex, customerGroup]) => {
         if (customerGroup.length > maxCustomersPerPolygon) {
           finalOversized.push({
@@ -120,15 +182,30 @@ export const generateTerritories = async (customers, { numSellers, maxCustomersP
             customerCount: customerGroup.length
           });
         }
+
+        // Check sales constraints after rebalancing
+        if (maxSalesPerTerritory > 0 && customerGroup.length > 0) {
+          const totalSales = customerGroup.reduce((sum, customer) => sum + (customer.sales || 0), 0);
+          if (totalSales > maxSalesPerTerritory) {
+            finalOversales.push({
+              territoryId: parseInt(clusterIndex) + 1,
+              totalSales: totalSales,
+              customerCount: customerGroup.length
+            });
+          }
+        }
       });
 
-      if (finalOversized.length > 0 || finalUndersized.length > 0) {
+      if (finalOversized.length > 0 || finalUndersized.length > 0 || finalOversales.length > 0) {
         const issues = [];
         if (finalOversized.length > 0) {
           issues.push(`oversized: ${finalOversized.map(c => `Territory ${c.territoryId} (${c.customerCount})`).join(', ')}`);
         }
         if (finalUndersized.length > 0) {
           issues.push(`undersized: ${finalUndersized.map(c => `Territory ${c.territoryId} (${c.customerCount})`).join(', ')}`);
+        }
+        if (finalOversales.length > 0) {
+          issues.push(`over sales limit: ${finalOversales.map(c => `Territory ${c.territoryId} ($${c.totalSales.toLocaleString()})`).join(', ')}`);
         }
         return {
           error: `Unable to balance territories after rebalancing attempts. Issues: ${issues.join('; ')}. Consider adjusting parameters.`
@@ -211,11 +288,15 @@ export const generateTerritories = async (customers, { numSellers, maxCustomersP
         lng: kmeansResult.centroids[clusterIdx][1]
       };
 
+      // Calculate total sales for the territory
+      const totalSales = customerGroup.reduce((sum, customer) => sum + (customer.sales || 0), 0);
+
       territories.push({
         id: clusterIdx + 1,
         path: polygonPath,
         customers: customerGroup,
         customerCount: customerGroup.length,
+        totalSales: totalSales,
         centroid
       });
     });
@@ -247,9 +328,9 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
 }
 
 /**
- * Rebalance territories to meet minimum and maximum customer requirements
+ * Rebalance territories to meet minimum and maximum customer requirements and sales constraints
  */
-async function rebalanceTerritories(customerGroups, coordinates, centroids, minCustomers, maxCustomers) {
+async function rebalanceTerritories(customerGroups, coordinates, centroids, minCustomers, maxCustomers, maxSales = 0) {
   const maxIterations = 10;
   let iteration = 0;
   let rebalancedGroups = JSON.parse(JSON.stringify(customerGroups)); // Deep copy
@@ -260,15 +341,19 @@ async function rebalanceTerritories(customerGroups, coordinates, centroids, minC
     iteration++;
     console.log(`Rebalancing iteration ${iteration}`);
 
-    // Find undersized and oversized territories
+    // Find undersized, oversized, and over-sales territories
     const undersized = [];
     const oversized = [];
+    const oversales = [];
     const normal = [];
 
     Object.entries(rebalancedGroups).forEach(([clusterIndex, customerGroup]) => {
+      const totalSales = customerGroup.reduce((sum, customer) => sum + (customer.sales || 0), 0);
+
       const info = {
         index: parseInt(clusterIndex),
         count: customerGroup.length,
+        totalSales: totalSales,
         customers: customerGroup,
         centroid: centroids[parseInt(clusterIndex)]
       };
@@ -277,14 +362,16 @@ async function rebalanceTerritories(customerGroups, coordinates, centroids, minC
         undersized.push(info);
       } else if (customerGroup.length > maxCustomers) {
         oversized.push(info);
+      } else if (maxSales > 0 && totalSales > maxSales) {
+        oversales.push(info);
       } else if (customerGroup.length >= minCustomers) {
         normal.push(info);
       }
     });
 
-    console.log(`Iteration ${iteration}: Undersized: ${undersized.length}, Oversized: ${oversized.length}, Normal: ${normal.length}`);
+    console.log(`Iteration ${iteration}: Undersized: ${undersized.length}, Oversized: ${oversized.length}, Over-sales: ${oversales.length}, Normal: ${normal.length}`);
 
-    if (undersized.length === 0 && oversized.length === 0) {
+    if (undersized.length === 0 && oversized.length === 0 && oversales.length === 0) {
       console.log('Territory rebalancing completed successfully');
       return rebalancedGroups;
     }
@@ -311,9 +398,17 @@ async function rebalanceTerritories(customerGroups, coordinates, centroids, minC
 
         customersWithDistance.sort((a, b) => a.distance - b.distance);
 
-        // Move the closest customers
+        // Move the closest customers, checking sales constraints
         for (let i = 0; i < toMove && i < customersWithDistance.length; i++) {
           const customerToMove = customersWithDistance[i].customer;
+
+          // Check if adding this customer would exceed sales limit
+          if (maxSales > 0) {
+            const newUnderSales = underTerritory.totalSales + (customerToMove.sales || 0);
+            if (newUnderSales > maxSales) {
+              continue; // Skip this customer if it would exceed sales limit
+            }
+          }
 
           // Remove from oversized territory
           const sourceIndex = rebalancedGroups[overTerritory.index].findIndex(c => c.id === customerToMove.id);
@@ -321,14 +416,56 @@ async function rebalanceTerritories(customerGroups, coordinates, centroids, minC
             rebalancedGroups[overTerritory.index].splice(sourceIndex, 1);
             rebalancedGroups[underTerritory.index].push(customerToMove);
             overTerritory.count--;
+            overTerritory.totalSales -= (customerToMove.sales || 0);
             underTerritory.count++;
+            underTerritory.totalSales += (customerToMove.sales || 0);
             movementsMade = true;
           }
         }
       }
     }
 
-    // Strategy 2: Move customers from normal territories to undersized territories
+    // Strategy 2: Move customers from over-sales territories to territories with sales capacity
+    for (const overSalesTerritory of oversales) {
+      const salesExcess = overSalesTerritory.totalSales - maxSales;
+
+      // Find customers with highest sales to move first
+      const customersWithSales = overSalesTerritory.customers.map(customer => ({
+        customer,
+        sales: customer.sales || 0
+      }));
+
+      customersWithSales.sort((a, b) => b.sales - a.sales);
+
+      for (const targetTerritory of [...normal, ...undersized]) {
+        if (salesExcess <= 0) break;
+        if (targetTerritory.count >= maxCustomers) continue;
+
+        const salesCapacity = maxSales > 0 ? maxSales - targetTerritory.totalSales : Infinity;
+        if (salesCapacity <= 0) continue;
+
+        // Move customers that fit within sales capacity
+        for (const customerWithSales of customersWithSales) {
+          const customer = customerWithSales.customer;
+          if (customer.sales <= salesCapacity && targetTerritory.count < maxCustomers) {
+            // Remove from over-sales territory
+            const sourceIndex = rebalancedGroups[overSalesTerritory.index].findIndex(c => c.id === customer.id);
+            if (sourceIndex !== -1) {
+              rebalancedGroups[overSalesTerritory.index].splice(sourceIndex, 1);
+              rebalancedGroups[targetTerritory.index].push(customer);
+              overSalesTerritory.count--;
+              overSalesTerritory.totalSales -= (customer.sales || 0);
+              targetTerritory.count++;
+              targetTerritory.totalSales += (customer.sales || 0);
+              movementsMade = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Strategy 3: Move customers from normal territories to undersized territories
     for (const underTerritory of undersized) {
       const needed = minCustomers - underTerritory.count;
 
@@ -348,9 +485,17 @@ async function rebalanceTerritories(customerGroups, coordinates, centroids, minC
 
         customersWithDistance.sort((a, b) => a.distance - b.distance);
 
-        // Move the closest customers
+        // Move the closest customers, checking sales constraints
         for (let i = 0; i < toMove && i < customersWithDistance.length; i++) {
           const customerToMove = customersWithDistance[i].customer;
+
+          // Check if adding this customer would exceed sales limit
+          if (maxSales > 0) {
+            const newUnderSales = underTerritory.totalSales + (customerToMove.sales || 0);
+            if (newUnderSales > maxSales) {
+              continue; // Skip this customer if it would exceed sales limit
+            }
+          }
 
           // Remove from normal territory
           const sourceIndex = rebalancedGroups[normalTerritory.index].findIndex(c => c.id === customerToMove.id);
@@ -358,14 +503,16 @@ async function rebalanceTerritories(customerGroups, coordinates, centroids, minC
             rebalancedGroups[normalTerritory.index].splice(sourceIndex, 1);
             rebalancedGroups[underTerritory.index].push(customerToMove);
             normalTerritory.count--;
+            normalTerritory.totalSales -= (customerToMove.sales || 0);
             underTerritory.count++;
+            underTerritory.totalSales += (customerToMove.sales || 0);
             movementsMade = true;
           }
         }
       }
     }
 
-    // Strategy 3: Merge very small territories with nearby territories
+    // Strategy 4: Merge very small territories with nearby territories
     const verySmall = undersized.filter(t => t.count < minCustomers / 2);
     for (const smallTerritory of verySmall) {
       if (smallTerritory.count === 0) continue;
@@ -378,6 +525,13 @@ async function rebalanceTerritories(customerGroups, coordinates, centroids, minC
         const index = parseInt(clusterIndex);
         if (index === smallTerritory.index) return;
         if (customerGroup.length + smallTerritory.count > maxCustomers) return;
+
+        // Check sales constraint
+        if (maxSales > 0) {
+          const currentSales = customerGroup.reduce((sum, customer) => sum + (customer.sales || 0), 0);
+          const additionalSales = smallTerritory.totalSales;
+          if (currentSales + additionalSales > maxSales) return;
+        }
 
         const distance = calculateDistance(
           smallTerritory.centroid[0],
@@ -393,7 +547,7 @@ async function rebalanceTerritories(customerGroups, coordinates, centroids, minC
       });
 
       if (bestTarget !== null) {
-        console.log(`Merging territory ${smallTerritory.index + 1} (${smallTerritory.count} customers) with territory ${bestTarget + 1}`);
+        console.log(`Merging territory ${smallTerritory.index + 1} (${smallTerritory.count} customers, $${smallTerritory.totalSales.toLocaleString()}) with territory ${bestTarget + 1}`);
 
         // Move all customers from small territory to target territory
         rebalancedGroups[bestTarget].push(...rebalancedGroups[smallTerritory.index]);
@@ -415,8 +569,11 @@ async function rebalanceTerritories(customerGroups, coordinates, centroids, minC
   // Final validation - check if we still have constraint violations
   const finalOversized = [];
   const finalUndersized = [];
+  const finalOversales = [];
 
   Object.entries(rebalancedGroups).forEach(([clusterIndex, customerGroup]) => {
+    const totalSales = customerGroup.reduce((sum, customer) => sum + (customer.sales || 0), 0);
+
     if (customerGroup.length > maxCustomers) {
       finalOversized.push({
         territoryId: parseInt(clusterIndex) + 1,
@@ -429,10 +586,16 @@ async function rebalanceTerritories(customerGroups, coordinates, centroids, minC
         customerCount: customerGroup.length
       });
     }
+    if (maxSales > 0 && totalSales > maxSales) {
+      finalOversales.push({
+        territoryId: parseInt(clusterIndex) + 1,
+        totalSales: totalSales
+      });
+    }
   });
 
   // If there are still violations, return error with details
-  if (finalOversized.length > 0 || finalUndersized.length > 0) {
+  if (finalOversized.length > 0 || finalUndersized.length > 0 || finalOversales.length > 0) {
     const issues = [];
     if (finalUndersized.length > 0) {
       const undersizedDetails = finalUndersized
@@ -446,9 +609,15 @@ async function rebalanceTerritories(customerGroups, coordinates, centroids, minC
         .join(', ');
       issues.push(`oversized territories (${oversizedDetails})`);
     }
+    if (finalOversales.length > 0) {
+      const oversalesDetails = finalOversales
+        .map(cluster => `Territory ${cluster.territoryId} has $${cluster.totalSales.toLocaleString()} in sales`)
+        .join(', ');
+      issues.push(`territories exceeding sales limits (${oversalesDetails})`);
+    }
 
     return {
-      error: `Automated clustering resulted in ${issues.join(' and ')}. Please reduce minimum customers per territory or review customer distribution.`
+      error: `Automated clustering resulted in ${issues.join(' and ')}. Please reduce minimum customers per territory or adjust sales limits.`
     };
   }
 
