@@ -1,40 +1,98 @@
-# GCut - Cutting Optimization Planner
+# GBalancer
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.0.1-blue.svg)](https://gfel.in/gcut)
+**Territory Balancer** - A React web application for creating and visualizing balanced sales force territories on a Google Map. This application serves as a planning tool for sales managers to automatically partition customers into balanced, geographically clustered polygons (territories).
 
-GCut is an advanced cutting optimization application designed for professional and industrial use. It helps optimize material usage for glass, wood, metal, and other materials, reducing waste and increasing efficiency.
+## Features
 
-## About GCut
+- **Interactive Google Maps Integration**: View customers and territories on a real map
+- **K-means Clustering**: Automatically cluster customers into balanced territories
+- **Convex Hull Visualization**: Generate polygon boundaries for each territory
+- **Real-time Validation**: Ensure territories don't exceed customer limits
+- **Interactive Territory Info**: Click on territories to see detailed information
+- **Responsive Design**: Works on desktop and mobile devices
 
-**Application Name:** GCut  
-**Version:** 1.0.0.1  
-**Company:** GMDev SAC  
-**Developer:** Gonzalo Melgarejo  
-**Website:** [gfel.in/gcut](https://gfel.in/gcut)
+## Core User Story
 
-### Key Features
+As a sales manager, you can:
+1. Load a set of 100 geolocated customers onto a map (San Francisco Bay Area)
+2. Specify the number of available sellers
+3. Set the maximum number of customers any single seller should handle
+4. Click "Generate Territories" to automatically partition customers into balanced, geographically clustered territories
+5. View the resulting territories as colored polygons on the map
 
-- Advanced cutting algorithms for multiple material types
-- Visual cutting plan representation  
-- PDF export functionality with professional branding
-- Multi-language support (English, Spanish)
-- Material optimization statistics
-- Historical project management
-- Responsive design for desktop and mobile
+## Setup Instructions
 
-### Supported Materials
+### Prerequisites
+- Node.js 18+
+- Google Maps API key
 
-- **Glass** - Windows, partitions, displays
-- **Wood** - Panels, doors, shelving  
-- **Metal** - Steel, aluminum sheets
-- **Fabric** - Textiles and composite materials
+### Installation
 
-## Getting Started
+1. **Clone and navigate to the project**:
+   ```bash
+   cd /path/to/gbalancer
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Configure Google Maps API**:
+   - Copy `.env.local` and add your Google Maps API key:
+   ```
+   VITE_GOOGLE_MAPS_API_KEY="your-actual-api-key-here"
+   ```
+   - Enable the following APIs in Google Cloud Console:
+     - Maps JavaScript API
+     - Geocoding API
+
+4. **Start the development server**:
+   ```bash
+   npm start
+   ```
+
+5. **Access the application**:
+   - Open your browser and navigate to `http://localhost:3003/gbalancer`
+
+## Usage Guide
+
+### Basic Operation
+
+1. **View Customer Data**: The map loads with 100 mock customers distributed across the San Francisco Bay Area
+2. **Set Parameters**:
+   - **Number of Sellers**: How many sales territories to create (1-20)
+   - **Max Customers per Territory**: Maximum customers any single seller should handle (1-100)
+3. **Generate Territories**: Click the "Generate Territories" button to create balanced territories
+4. **Explore Results**:
+   - View territories as colored polygons on the map
+   - Click on any territory to see detailed information
+   - Use the legend to identify different territories
+
+### Parameter Guidelines
+
+- **Capacity Check**: Total max capacity (sellers × max customers) must be ≥ total customers
+- **Minimum Requirements**: Total min requirements (sellers × min customers) should be ≤ total customers
+- **Range Validation**: Min customers per territory must be ≤ max customers per territory
+- **Optimal Settings**: For 100 customers, try:
+  - 5 sellers with 15-25 customers each (min 15, max 25)
+  - 4 sellers with 20-30 customers each (min 20, max 30)
+  - 10 sellers with 8-15 customers each (min 8, max 15)
+
+### Error Handling
+
+The application provides clear error messages for:
+- Insufficient max capacity settings
+- Excessive minimum requirements
+- Invalid parameter ranges (min > max)
+- Unbalanced clustering results
+- Google Maps API issues
+- Invalid parameter inputs
 
 1. Clone the repository
 ```bash
-git clone https://github.com/your-repo/gcut-planner.git
+git clone <repository-url>
+cd modern-dashboard-template
 ```
 
 2. Install dependencies
@@ -42,200 +100,195 @@ git clone https://github.com/your-repo/gcut-planner.git
 npm install
 ```
 
-3. Start the application
+3. Start the development server
 ```bash
 npm start
 ```
 
-## Technology Stack
+4. Open [http://localhost:3000](http://localhost:3000) to view it in the browser
 
-- React 19
-- Material UI v7
-- Vite build system
-- i18next for internationalization
-- Professional PDF generation
+## Available Scripts
+
+- `npm start` - Start development server
+- `npm build` - Build for production
+- `npm run lint` - Run ESLint
+- `npm run lint:fix` - Fix ESLint issues
+- `npm run prettier` - Format code with Prettier
+- `npm run format` - Run both Prettier and ESLint fixes
+
+## Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+├── contexts/           # React contexts (Theme, etc.)
+├── hooks/             # Custom React hooks
+├── i18n/              # Internationalization setup
+├── layout/            # Layout components
+├── menu-items/        # Navigation menu configuration
+├── pages/             # Page components
+├── routes/            # Routing configuration
+├── themes/            # Theme configuration
+├── utils/             # Utility functions
+└── App.jsx            # Main App component
+```
+
+## Features Guide
+
+### Dark/Light Mode
+
+The template includes a built-in theme switcher that allows users to toggle between dark and light modes. The preference is automatically saved to localStorage and persists across sessions.
+
+### Multilanguage Support
+
+Currently supports English and Spanish. Languages can be switched using the language switcher component. Add new languages by extending the translation files in `src/i18n/`.
+
+### Adding New Pages
+
+1. Create a new component in `src/pages/`
+2. Add the route in `src/routes/MainRoutes.jsx`
+3. Add menu item in `src/menu-items/`
+4. Add translations in `src/i18n/index.js`
+
+### Customizing Themes
+
+Theme customization can be done in `src/themes/`. The template uses Material-UI's theming system, allowing you to customize colors, typography, spacing, and component styles.
+
+## Building for Production
+
+```bash
+npm run build
+```
+
+The build folder will contain the optimized production build.
 
 ## License
 
-Licensed under [MIT](./LICENSE)
+This project is licensed under the MIT License.
 
-## Contact
+## Contributing
 
-**GMDev SAC**  
-Developer: Gonzalo Melgarejo  
-Website: [gfel.in/gcut](https://gfel.in/gcut)
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
----
+## Support
 
-Built with ❤️ for efficient material optimization
+For questions and support, please open an issue on the GitHub repository.
 
-## Table of contents
+## Technical Implementation
 
-- [Getting Started](#getting-started)
-- [Download](#download)
-- [Why Mantis?](#why-mantis)
-- [What's included in Premium Version?](#whats-included-in-premium-version)
-- [Documentation](#documentation)
-- [Browser support](#browser-support)
-- [Technology Stack](#technology-stack)
-- [Mantis Figma UI Kit](#mantis-figma-ui-kit)
-- [Other Technologies](#other-technologies)
-- 💰[Save more with Big Bundle](#save-more-with-big-bundle)💰
-- [More React Dashboard Templates](#more-react-dashboard-templates)
-- [Issues?](#issues)
-- [License](#license)
-- [Contributor](#contributor)
-- [Useful Resources](#useful-resources)
-- [Community](#community)
-- [Follow us](#follow-us)
+### Core Technologies
 
-## Getting Started
+- **React 19**: Modern React with hooks for state management
+- **Material-UI**: Professional UI components and theming
+- **@react-google-maps/api**: Google Maps integration for React
+- **ml-kmeans**: K-means clustering algorithm for territory creation
+- **convex-hull**: Polygon boundary calculation for territory visualization
+- **Vite**: Fast development build tool
 
-1. Clone from Github
+### Architecture
 
 ```
-git clone https://github.com/codedthemes/mantis-free-react-admin-template.git
+src/
+├── components/
+│   ├── Controls.jsx          # User input panel for territory parameters
+│   └── MapContainer.jsx      # Google Maps display with markers and polygons
+├── services/
+│   └── territoryService.js   # Core business logic for territory generation
+├── data/
+│   └── mockCustomers.js      # Mock customer data (100 customers)
+├── App.jsx                   # Main application orchestrator
+└── index.jsx                 # Application entry point
 ```
 
-2. Install packages
+### Key Algorithms
 
+1. **K-means Clustering**:
+   - Groups customers into geographically close clusters
+   - Number of clusters = number of sellers
+   - Uses kmeans++ initialization for better results
+
+2. **Convex Hull Calculation**:
+   - Creates polygon boundaries around customer clusters
+   - Handles edge cases (1-2 customers) with special shapes
+   - Falls back to bounding boxes if hull calculation fails
+
+3. **Validation Logic**:
+   - Pre-clustering: Ensures sufficient capacity
+   - Post-clustering: Validates no territory exceeds customer limits
+   - Provides clear error messages for adjustments
+
+## Customization Options
+
+### Adding New Customer Data
+
+Replace the mock data in `src/data/mockCustomers.js`:
+```javascript
+const mockCustomers = [
+  { id: 1, name: 'Customer Name', location: { lat: 37.7749, lng: -122.4194 } },
+  // ... more customers
+];
 ```
-yarn
+
+### Modifying Territory Colors
+
+Edit the color palette in `src/components/MapContainer.jsx`:
+```javascript
+const territoryColors = [
+  '#FF6B6B', '#4ECDC4', '#45B7D1', // Add more colors
+];
 ```
 
-3. Run project
+### Adjusting Clustering Parameters
 
+Modify clustering settings in `src/services/territoryService.js`:
+```javascript
+const kmeansResult = kmeans(coordinates, numSellers, {
+  initialization: 'kmeans++',
+  maxIterations: 100,
+  tolerance: 1e-6
+});
 ```
-yarn run start
-```
 
-## Download
+## Troubleshooting
 
-- Mantis Free
-  - [Live Preview](https://mantisdashboard.io/free/)
-  - [Download](https://codedthemes.com/item/mantis-free-mui-admin-template/)
-- Mantis Pro
-  - [Live Preview](https://mantisdashboard.io/)
-  - [Download](https://codedthemes.com/item/mantis-mui-react-dashboard-template/)
+### Common Issues
 
-## Why Mantis?
+1. **Google Maps not loading**:
+   - Verify API key is correct in `.env.local`
+   - Check that Maps JavaScript API is enabled
+   - Ensure billing is set up in Google Cloud Console
 
-Mantis offers everything needed to build an advanced dashboard application. In the initial release, we included following high-end features,
+2. **Clustering errors**:
+   - Reduce number of sellers or increase max customers
+   - Ensure customer data has valid lat/lng coordinates
+   - Check browser console for detailed error messages
 
-- Support React19.
-- Professional user interface.
-- Material UI React components(MUI v7).
-- Fully responsive, all modern browser supported.
-- Easy to use code structure
-- Flexible & high-Performance code
-- Simple documentation
+3. **Performance issues**:
+   - Limit customer data to <1000 points for optimal performance
+   - Consider using marker clustering for large datasets
+   - Reduce polygon complexity for better rendering
 
-## What's included in Premium Version?
+### Development Tips
 
-The [Pro version](https://mantisdashboard.io/) of Mantis react template includes features such as TypeScript, apps, authentication methods (i.e. JWT, Auth0, Firebase, AWS, Supabase), advance components, form plugins, layouts, widgets, and more.
+- Use React DevTools for debugging component state
+- Check Network tab for Google Maps API call issues
+- Monitor console for clustering algorithm warnings
+- Test with different parameter combinations
 
-| [Mantis Free](https://mantisdashboard.io/free/)                                                      | [Mantis](https://mantisdashboard.io/)                                            |
-| ---------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------- |
-| **7** Demo pages                                                                                     | **85+** demo pages                                                               |
-| -                                                                                                    | ✓ Multi-language                                                                 |
-| -                                                                                                    | ✓ Dark/Light Mode 🌓                                                             |
-| -                                                                                                    | ✓ TypeScript version                                                             |
-| -                                                                                                    | ✓ Design files (Figma)                                                           |
-| -                                                                                                    | ✓ Multiple color options                                                         |
-| -                                                                                                    | ✓ RTL                                                                            |
-| -                                                                                                    | ✓ JWT authentications                                                            |
-| -                                                                                                    | ✓ [More components](https://mantisdashboard.io/components-overview/autocomplete) |
-| ✓ [MIT License](https://github.com/codedthemes/mantis-free-react-admin-template/blob/master/LICENSE) | ✓ [Pro License](https://mui.com/store/license/)                                  |
+## Future Enhancements
 
-## Documentation
-
-[Mantis documentation](https://codedthemes.gitbook.io/mantis) helps you out in all aspects from Installation to deployment.
-
-## Browser support
-
-<img src="https://org-public-assets.s3.us-west-2.amazonaws.com/logos/chrome.png" width="45" height="45" > <img src="https://org-public-assets.s3.us-west-2.amazonaws.com/logos/edge.png" width="45" height="45" > <img src="https://org-public-assets.s3.us-west-2.amazonaws.com/logos/safari.png" width="45" height="45" > <img src="https://org-public-assets.s3.us-west-2.amazonaws.com/logos/firefox.png" width="45" height="45" > <img src="https://org-public-assets.s3.us-west-2.amazonaws.com/logos/opera.png" width="45" height="45" >
-
-## Technology Stack
-
-- Material UI V7
-- Built with React Hooks API.
-- React context API for state management.
-- SWR.
-- React Router for navigation routing.
-- Support for Vite.
-- Code splitting.
-- CSS-in-JS.
-
-## Mantis Figma UI Kit
-
-| FREE                                                                                                                        | PRO                                                                                                                       |
-| --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| <img src="https://org-public-assets.s3.us-west-2.amazonaws.com/Banners/Figma_Free_Mantis.png" width="450" alt="Figma Free"> | <img src="https://org-public-assets.s3.us-west-2.amazonaws.com/Banners/Figma_Pro_Mantis.png" width="450" alt="Figma Pro"> |
-
-## Other Technologies
-
-| Technology                                                                                                                        | Free                                                                               | Pro                                                                       |
-| --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| <p align="center"><img src="https://org-public-assets.s3.us-west-2.amazonaws.com/logos/Angular.png" width="25" height="25"></p>   | [**Free**](https://codedthemes.com/item/mantis-angular-free-admin-template/)       | [**Pro**](https://codedthemes.com/item/mantis-angular-admin-template/)    |
-| <p align="center"><img src="https://org-public-assets.s3.us-west-2.amazonaws.com/logos/Bootstrap.png" width="30" height="30"></p> | [**Free**](https://codedthemes.com/item/mantis-bootstrap-free-admin-template/)     | [**Pro**](https://codedthemes.com/item/mantis-bootstrap-admin-dashboard/) |
-| <p align="center"><img src="https://org-public-assets.s3.us-west-2.amazonaws.com/logos/Vue.png" width="25" height="25"></p>       | [**Free**](https://codedthemes.com/item/mantis-free-vuetify-vuejs-admin-template/) | [**Pro**](https://codedthemes.com/item/mantis-vue-admin-template/)        |
-
-## Save more with Big Bundle
-
-[![bundle-image](https://org-public-assets.s3.us-west-2.amazonaws.com/Banners/Bundle+banner.png)](https://links.codedthemes.com/jhFBJ)
-
-## More React Dashboard Templates
-
-| Dashboard                                                                                                                                                          | FREE                                                                                | PRO                                                                                   |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| <img src="https://org-public-assets.s3.us-west-2.amazonaws.com/logos/Berry%20with%20name.png"  height="30" style="display:inline-block; vertical-align:middle;">   | [**Free**](https://codedthemes.com/item/berry-mui-free-react-admin-template/)       | [**Pro**](https://codedthemes.com/item/berry-material-react-admin-template/)</span>   |
-| <img src="https://org-public-assets.s3.us-west-2.amazonaws.com/logos/Datta%20with%20name.png" height="30" style="display:inline-block; vertical-align:middle;">    | [**Free**](https://codedthemes.com/item/datta-able-react-free-admin-template/)      | [**Pro**](https://codedthemes.com/item/datta-able-react-admin-template/)</span>       |
-| <img src="https://org-public-assets.s3.us-west-2.amazonaws.com/logos/Gradient%20with%20name.png" height="30" style="display:inline-block; vertical-align:middle;"> | [**Free**](https://codedthemes.com/item/gradient-able-reactjs-free-admin-template/) | [**Pro**](https://codedthemes.com/item/gradient-able-reactjs-admin-dashboard/)</span> |
-
-## Issues
-
-Please generate a [Github issue](https://github.com/codedthemes/mantis-free-react-admin-template/issues) if you found a bug in any version. We are try our best to resolve the issue.
+Potential improvements for production use:
+- **Advanced Balancing**: Implement territory rebalancing algorithms
+- **Custom Constraints**: Add distance limits, demographic balancing
+- **Data Import**: CSV/Excel file upload for customer data
+- **Export Features**: Save territories as GeoJSON or print maps
+- **Performance Optimization**: Marker clustering for large datasets
+- **Real-time Updates**: WebSocket integration for live territory updates
 
 ## License
 
-- Licensed under [MIT](https://github.com/codedthemes/mantis-free-react-admin-template/blob/master/LICENSE)
-- Copyright © [CodedThemes](https://codedthemes.com/)
-
-## Contributor
-
-**CodedThemes Team**
-
-- https://x.com/codedthemes
-- https://github.com/codedthemes
-
-**Rakesh Nakrani**
-
-- https://x.com/rakesh_nakrani
-
-**Brijesh Dobariya**
-
-- https://x.com/dobaria_brijesh
-
-## Useful Resources
-
-- [More Admin Templates From CodedThemes](https://codedthemes.com/item/category/admin-templates/)
-- [Freebies From CodedThemes](https://codedthemes.com/item/category/free-templates/)
-- [Big Bundles](https://codedthemes.com/item/big-bundle/)
-- [Figma UI Kits](https://codedthemes.com/item/category/templates/figma/)
-- [Affiliate Program](https://codedthemes.com/affiliate/)
-- [Blogs](https://blog.codedthemes.com/)
-
-## Community
-
-- 👥Follow [@codedThemes](https://x.com/codedthemes)
-- 🔗Join [Discord](https://discord.com/invite/p2E2WhCb6s)
-- 🔔Subscribe to [CodedTheme Blogs](https://blog.codedthemes.com/)
-
-## Follow Us
-
-- [Twitter](https://twitter.com/codedthemes) 🐦
-- [Dribbble](https://dribbble.com/codedthemes) 🏀
-- [Github](https://github.com/codedthemes) 🐙
-- [LinkedIn](https://www.linkedin.com/company/codedthemes/) 💼
-- [Instagram](https://www.instagram.com/codedthemes/) 📷
-- [Facebook](https://www.facebook.com/codedthemes) 🟦
+This project is licensed under the MIT License.

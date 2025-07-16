@@ -3,7 +3,7 @@ import { useTheme } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
 
 // icons
-import { BulbOutlined, BulbFilled } from '@ant-design/icons';
+import { BulbFilled, BulbOutlined } from '@ant-design/icons';
 
 // project imports
 import { useThemeMode } from 'contexts/ThemeContext';
@@ -13,7 +13,7 @@ import { useThemeMode } from 'contexts/ThemeContext';
 export default function ThemeSwitcher() {
   const theme = useTheme();
   const { t } = useTranslation();
-  const { mode, toggleTheme, isDark } = useThemeMode();
+  const { toggleTheme, isDark } = useThemeMode();
 
   return (
     <Tooltip title={t(`theme.${isDark ? 'switchToLight' : 'switchToDark'}`)}>

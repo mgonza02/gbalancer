@@ -1,12 +1,12 @@
 import PropTypes from 'prop-types';
 
 // material-ui
-import { alpha, styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
+import { alpha, styled } from '@mui/material/styles';
 
 // third-party
-import SimpleBar from 'simplebar-react';
 import { BrowserView, MobileView } from 'react-device-detect';
+import SimpleBar from 'simplebar-react';
 
 // root style
 const RootStyle = styled(BrowserView)({
@@ -43,7 +43,7 @@ const SimpleBarStyle = styled(SimpleBar)(({ theme }) => ({
 // ==============================|| SIMPLE SCROLL BAR ||============================== //
 
 export default function SimpleBarScroll({ children, sx, ...other }) {
-  const theme = useTheme();
+  // const theme = useTheme();
 
   return (
     <>

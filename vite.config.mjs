@@ -5,13 +5,13 @@ import jsconfigPaths from 'vite-jsconfig-paths';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const API_URL = `${env.VITE_APP_BASE_NAME}`;
-  const PORT = 3001;
+  const PORT = 3000;
 
   return {
     server: {
       // this ensures that the browser opens upon server start
       open: true,
-      // this sets a default port to 3001
+      // this sets a default port to 3000
       port: PORT,
       host: true
     },

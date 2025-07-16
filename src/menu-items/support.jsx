@@ -25,7 +25,7 @@ const support = {
       id: 'documentation',
       title: 'Website',
       type: 'item',
-      url: 'https://gfel.in/gcut',
+      url: 'https://gfel.in/gbalancer',
       icon: icons.QuestionOutlined,
       external: true,
       target: true
