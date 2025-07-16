@@ -46,6 +46,7 @@ export const ThemeContextProvider = ({ children }) => {
       const newMode = prevMode === ThemeMode.LIGHT ? ThemeMode.DARK : ThemeMode.LIGHT;
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('gbalancer-theme-mode', newMode);
+        document.documentElement.setAttribute('data-theme', newMode);
       }
       return newMode;
     });
@@ -57,6 +58,7 @@ export const ThemeContextProvider = ({ children }) => {
       setMode(newMode);
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('gbalancer-theme-mode', newMode);
+        document.documentElement.setAttribute('data-theme', newMode);
       }
     }
   };
@@ -79,10 +81,11 @@ export const ThemeContextProvider = ({ children }) => {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
-  // Save theme preference
+  // Save theme preference and update document attribute
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.localStorage.setItem('gbalancer-theme-mode', mode);
+      document.documentElement.setAttribute('data-theme', mode);
     }
   }, [mode]);
 

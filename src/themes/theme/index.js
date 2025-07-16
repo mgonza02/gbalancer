@@ -1,6 +1,6 @@
 // ==============================|| PRESET THEME - DEFAULT ||============================== //
 
-export default function Default(colors) {
+export default function Default(colors, presetColor, mode) {
   const { blue, red, gold, cyan, green, grey } = colors;
   const greyColors = {
     0: grey[0],
@@ -22,6 +22,7 @@ export default function Default(colors) {
     A800: grey[16]
   };
   const contrastText = '#fff';
+  const isDark = mode === 'dark';
 
   return {
     primary: {
@@ -35,7 +36,7 @@ export default function Default(colors) {
       700: blue[7],
       darker: blue[8],
       900: blue[9],
-      contrastText
+      contrastText: isDark ? '#000' : contrastText
     },
     secondary: {
       lighter: greyColors[100],
@@ -51,7 +52,7 @@ export default function Default(colors) {
       A100: greyColors[0],
       A200: greyColors.A400,
       A300: greyColors.A700,
-      contrastText: greyColors[0]
+      contrastText: isDark ? '#fff' : greyColors[0]
     },
     error: {
       lighter: red[0],
@@ -59,7 +60,7 @@ export default function Default(colors) {
       main: red[4],
       dark: red[7],
       darker: red[9],
-      contrastText
+      contrastText: isDark ? '#000' : contrastText
     },
     warning: {
       lighter: gold[0],
@@ -67,7 +68,7 @@ export default function Default(colors) {
       main: gold[5],
       dark: gold[7],
       darker: gold[9],
-      contrastText: greyColors[100]
+      contrastText: isDark ? '#000' : greyColors[100]
     },
     info: {
       lighter: cyan[0],
@@ -75,7 +76,7 @@ export default function Default(colors) {
       main: cyan[5],
       dark: cyan[7],
       darker: cyan[9],
-      contrastText
+      contrastText: isDark ? '#000' : contrastText
     },
     success: {
       lighter: green[0],
@@ -83,7 +84,7 @@ export default function Default(colors) {
       main: green[5],
       dark: green[7],
       darker: green[9],
-      contrastText
+      contrastText: isDark ? '#000' : contrastText
     },
     grey: greyColors
   };

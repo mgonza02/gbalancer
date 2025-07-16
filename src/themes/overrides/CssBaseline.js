@@ -23,14 +23,16 @@ export default function CssBaseline(theme) {
           color: theme.palette.text.primary,
           fontFamily: theme.typography.fontFamily,
           fontSize: theme.typography.fontSize,
-          lineHeight: theme.typography.body1.lineHeight
+          lineHeight: theme.typography.body1.lineHeight,
+          transition: 'background-color 0.2s ease-in-out, color 0.2s ease-in-out'
         },
         '#root': {
           width: '100%',
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          backgroundColor: theme.palette.background.default
+          backgroundColor: theme.palette.background.default,
+          transition: 'background-color 0.2s ease-in-out'
         },
         // Scrollbar styling for dark mode
         '*::-webkit-scrollbar': {
