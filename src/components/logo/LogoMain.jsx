@@ -20,7 +20,7 @@ export default function LogoMain() {
      * if you want to use image instead of svg uncomment following, and comment out <svg> element.
      *
      * const { isDark } = useThemeMode();
-     * <img src={isDark ? logoDark : logo} alt="GCut" width="100" />
+     * <img src={isDark ? logoDark : logo} alt="gbalancer" width="100" />
      *
      */
     <>
@@ -41,9 +41,9 @@ export default function LogoMain() {
         <rect x='55' y='15' width='7' height='6' fill={theme.palette.primary.main} />
         <rect x='48' y='18' width='5' height='9' fill={theme.palette.primary.main} />
 
-        {/* GCut text */}
+        {/* GBalancer text */}
         <text x='68' y='20' fill={theme.palette.text.primary} fontSize='12' fontWeight='600' fontFamily='Inter, sans-serif'>
-          GCut
+          GBalancer
         </text>
       </svg>
     </>

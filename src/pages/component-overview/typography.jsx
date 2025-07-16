@@ -174,7 +174,7 @@ export default function ComponentTypography() {
           </MainCard>
           <MainCard title='Link'>
             <Stack sx={{ gap: 1.5 }}>
-              <Link href='#'>gfel.in/gcut</Link>
+              <Link href='#'>gfel.in/gbalancer</Link>
               <Breadcrumbs aria-label='breadcrumb'>
                 <Typography variant='h6'>Size: 12px</Typography>
                 <Typography variant='h6'>Weight: Regular</Typography>

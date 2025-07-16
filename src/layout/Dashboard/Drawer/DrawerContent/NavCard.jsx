@@ -30,13 +30,13 @@ export default function NavCard() {
       <Stack alignItems='center' spacing={2.5}>
         <CardMedia component='img' image={avatar} sx={{ width: 112 }} />
         <Stack alignItems='center'>
-          <Typography variant='h5'>GCut</Typography>
+          <Typography variant='h5'>GBalancer</Typography>
           <Typography variant='h6' color='secondary'>
             Cutting Optimization
           </Typography>
         </Stack>
         <AnimateButton>
-          <Button component={Link} target='_blank' href='https://gfel.in/gcut' variant='contained' color='primary' size='small'>
+          <Button component={Link} target='_blank' href='https://gfel.in/gbalancer' variant='contained' color='primary' size='small'>
             Visit Website
           </Button>
         </AnimateButton>

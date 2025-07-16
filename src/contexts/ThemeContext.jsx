@@ -19,7 +19,7 @@ export const ThemeContextProvider = ({ children }) => {
       return ThemeMode.LIGHT;
     }
 
-    const savedTheme = window.localStorage.getItem('gcut-theme-mode');
+    const savedTheme = window.localStorage.getItem('gbalancer-theme-mode');
     if (savedTheme && Object.values(ThemeMode).includes(savedTheme)) {
       return savedTheme;
     }
@@ -45,7 +45,7 @@ export const ThemeContextProvider = ({ children }) => {
     setMode(prevMode => {
       const newMode = prevMode === ThemeMode.LIGHT ? ThemeMode.DARK : ThemeMode.LIGHT;
       if (typeof window !== 'undefined') {
-        window.localStorage.setItem('gcut-theme-mode', newMode);
+        window.localStorage.setItem('gbalancer-theme-mode', newMode);
       }
       return newMode;
     });
@@ -56,7 +56,7 @@ export const ThemeContextProvider = ({ children }) => {
     if (Object.values(ThemeMode).includes(newMode)) {
       setMode(newMode);
       if (typeof window !== 'undefined') {
-        window.localStorage.setItem('gcut-theme-mode', newMode);
+        window.localStorage.setItem('gbalancer-theme-mode', newMode);
       }
     }
   };
@@ -69,7 +69,7 @@ export const ThemeContextProvider = ({ children }) => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     const handleChange = e => {
-      const savedTheme = window.localStorage.getItem('gcut-theme-mode');
+      const savedTheme = window.localStorage.getItem('gbalancer-theme-mode');
       if (!savedTheme) {
         setMode(e.matches ? ThemeMode.DARK : ThemeMode.LIGHT);
       }
@@ -82,7 +82,7 @@ export const ThemeContextProvider = ({ children }) => {
   // Save theme preference
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem('gcut-theme-mode', mode);
+      window.localStorage.setItem('gbalancer-theme-mode', mode);
     }
   }, [mode]);
 
