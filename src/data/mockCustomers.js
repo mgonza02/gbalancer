@@ -1,4 +1,5 @@
 import { defaultBalancerConfig } from '../config';
+import { dummyCustomers } from './dummy-customers';
 
 // --- Helper function to generate a random coordinate within a bounding box ---
 const getRandomCoordinates = box => {
@@ -22,11 +23,21 @@ const salesAverages = {
 };
 
 // --- Generate mock customers ---
-const mockCustomers = Array.from({ length: defaultBalancerConfig.customers }, (_, i) => ({
+const mockCustomersDraft = Array.from({ length: defaultBalancerConfig.customers }, (_, i) => ({
   id: i + 1,
   name: `Customer ${i + 1}`,
   location: getRandomCoordinates(sfBox),
   sales: Math.floor(Math.random() * (salesAverages.max - salesAverages.min + 1)) + salesAverages.min
 }));
 
-export default mockCustomers;
+const handleMakeCustomers =  () => {
+  return dummyCustomers.map(customer => ({
+    ...customer,
+    location: {
+      lat: parseFloat(customer.lat.toFixed(6)),
+      lng: parseFloat(customer.lng.toFixed(6))
+    }
+  }));
+};
+
+export   {handleMakeCustomers};

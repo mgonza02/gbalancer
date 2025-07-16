@@ -6,16 +6,17 @@ import { useLocation } from 'react-router-dom';
 import Controls from '../components/Controls';
 import MapContainer from '../components/MapContainer';
 import { defaultBalancerConfig } from '../config';
-import mockCustomers from '../data/mockCustomers';
+import { handleMakeCustomers } from '../data/mockCustomers';
 import { generateTerritories } from '../services/territoryService';
 
 const Dashboard = () => {
   const location = useLocation();
-  const [customers] = useState(mockCustomers);
+  const [customers] = useState(handleMakeCustomers());
   const [territories, setTerritories] = useState([]);
   const [controls, setControls] = useState(defaultBalancerConfig);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  console.log('App initialized with customers:', customers);
 
   // Load balance data from history if passed via navigation state
   useEffect(() => {

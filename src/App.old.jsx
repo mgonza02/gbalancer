@@ -96,6 +96,7 @@ function App() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+
   const handleGenerateTerritories = async () => {
     setError('');
     setLoading(true);
