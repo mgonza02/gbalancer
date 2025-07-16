@@ -30,14 +30,32 @@ const mockCustomersDraft = Array.from({ length: defaultBalancerConfig.customers 
   sales: Math.floor(Math.random() * (salesAverages.max - salesAverages.min + 1)) + salesAverages.min
 }));
 
-const handleMakeCustomers =  () => {
-  return dummyCustomers.map(customer => ({
-    ...customer,
-    location: {
-      lat: parseFloat(customer.lat.toFixed(6)),
-      lng: parseFloat(customer.lng.toFixed(6))
+const handleMakeCustomers = () => {
+  return dummyCustomers.reduce((validCustomers, customer) => {
+    // Skip customers without valid lat/lng coordinates
+    if (!customer.lat || !customer.lng) {
+      return validCustomers;
     }
-  }));
+    // console.log ( 'lat', lat, lng);
+
+    const lat = parseFloat(customer.lat);
+    const lng = parseFloat(customer.lng);
+
+    // Skip customers with invalid coordinate values or zero coordinates
+    if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) {
+      return validCustomers;
+    }
+
+    validCustomers.push({
+      ...customer,
+      location: {
+        lat: parseFloat(lat.toFixed(8)),
+        lng: parseFloat(lng.toFixed(8))
+      }
+    });
+
+    return validCustomers;
+  }, []);
 };
 
-export   {handleMakeCustomers};
+export { handleMakeCustomers };

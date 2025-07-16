@@ -17,19 +17,20 @@ export const settings = {
   defaultPresetColor: 'default',
   defaultNavColor: 'default',
   defaultLayout: 'vertical',
-  googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+  googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+  currencySymbol: 'S/ '
 };
 
 export const defaultBalancerConfig = {
-  numSellers: 2,
+  numSellers: 150,
   customers: 500,
-  minTerritoriesPerSeller: 6,
+  minTerritoriesPerSeller: 2,
   territorySize: 1000,
-  maxTerritories: 60,
-  maxCustomersPerPolygon: 55,
+  maxTerritories: 1000,
+  maxCustomersPerPolygon: 500,
   minCustomersPerPolygon: 10,
-  maxSalesPerTerritory: 200000,
-  minSalesPerTerritory: 20000
+  maxSalesPerTerritory: 70000,
+  minSalesPerTerritory: 20
   /*
   For next version, we will add the following properties to the config:
   maxOversizedTerritories: 5,

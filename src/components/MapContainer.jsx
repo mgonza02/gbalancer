@@ -1,5 +1,5 @@
 import { LocationOn, People, ZoomOutMap } from '@mui/icons-material';
-import { Alert, Box, Chip, CircularProgress, Fade, IconButton, Paper, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Card, Chip, CircularProgress, Fade, IconButton, Paper, Tooltip, Typography } from '@mui/material';
 import { GoogleMap, InfoWindowF, MarkerF, PolygonF, useJsApiLoader } from '@react-google-maps/api';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { settings } from '../config';
@@ -37,7 +37,11 @@ const MapContainer = ({ customers, territories }) => {
       '#2F855A', // Dark Green
       '#B794F6', // Light Purple
       '#F56565', // Light Red
-      '#48BB78' // Light Green
+      '#48BB78',  // Light Green
+      '#ED8936', // Light Orange
+      '#63B3ED'   // Light Blue
+
+
     ],
     []
   );
@@ -68,35 +72,35 @@ const MapContainer = ({ customers, territories }) => {
   // Modern map styling
   const mapStyles = useMemo(
     () => [
-      {
-        featureType: 'administrative',
-        elementType: 'geometry',
-        stylers: [{ visibility: 'off' }]
-      },
-      {
-        featureType: 'poi',
-        stylers: [{ visibility: 'off' }]
-      },
-      {
-        featureType: 'road',
-        elementType: 'labels.icon',
-        stylers: [{ visibility: 'off' }]
-      },
-      {
-        featureType: 'road.highway',
-        elementType: 'geometry',
-        stylers: [{ color: '#f0f0f0' }]
-      },
-      {
-        featureType: 'road.arterial',
-        elementType: 'geometry',
-        stylers: [{ color: '#f8f8f8' }]
-      },
-      {
-        featureType: 'water',
-        elementType: 'geometry',
-        stylers: [{ color: '#e0f2fe' }]
-      }
+      // {
+      //   featureType: 'administrative',
+      //   elementType: 'geometry',
+      //   stylers: [{ visibility: 'off' }]
+      // },
+      // {
+      //   featureType: 'poi',
+      //   stylers: [{ visibility: 'off' }]
+      // },
+      // {
+      //   featureType: 'road',
+      //   elementType: 'labels.icon',
+      //   stylers: [{ visibility: 'off' }]
+      // },
+      // {
+      //   featureType: 'road.highway',
+      //   elementType: 'geometry',
+      //   stylers: [{ color: '#f0f0f0' }]
+      // },
+      // {
+      //   featureType: 'road.arterial',
+      //   elementType: 'geometry',
+      //   stylers: [{ color: '#f8f8f8' }]
+      // },
+      // {
+      //   featureType: 'water',
+      //   elementType: 'geometry',
+      //   stylers: [{ color: '#e0f2fe' }]
+      // }
     ],
     []
   );
@@ -385,6 +389,7 @@ const MapContainer = ({ customers, territories }) => {
               maxWidth: 300
             }}
           >
+            <Card>
             <Box sx={{ p: 1 }}>
               <Typography variant='h6' gutterBottom color='primary'>
                 Territory {activePolygon.id}
@@ -425,6 +430,7 @@ const MapContainer = ({ customers, territories }) => {
                 ))}
               </Box>
             </Box>
+            </Card>
           </InfoWindowF>
         )}
 
@@ -437,6 +443,8 @@ const MapContainer = ({ customers, territories }) => {
               pixelOffset: new window.google.maps.Size(0, -30)
             }}
           >
+            <Card>
+
             <Box sx={{ p: 1 }}>
               <Typography variant='h6' gutterBottom>
                 {activeMarker.name}
@@ -445,9 +453,16 @@ const MapContainer = ({ customers, territories }) => {
                 ID: {activeMarker.id}
               </Typography>
               <Typography variant='body2' color='text.secondary'>
+                Name: {activeMarker.customer_name}
+              </Typography>
+              <Typography variant='body2' color='text.secondary'>
+                DNI: {activeMarker.document_number}
+              </Typography>
+              <Typography variant='body2' color='text.secondary'>
                 Location: {activeMarker.location.lat.toFixed(4)}, {activeMarker.location.lng.toFixed(4)}
               </Typography>
             </Box>
+            </Card>
           </InfoWindowF>
         )}
 
@@ -513,7 +528,7 @@ const MapContainer = ({ customers, territories }) => {
               p: { xs: 1.5, sm: 2 },
               maxWidth: { xs: 250, sm: 320 },
               maxHeight: { xs: '50vh', sm: '60vh' },
-              bgcolor: 'rgba(255, 255, 255, 0.95)',
+              // bgcolor: 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(10px)',
               borderRadius: 3,
               overflowY: 'auto',

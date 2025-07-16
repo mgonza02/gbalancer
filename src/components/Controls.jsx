@@ -3,6 +3,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Card, CardContent, Chip, Divider, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { settings } from '../config';
 import SaveBalanceDialog from './SaveBalanceDialog';
 
 const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, territories, customers, loading, onLoadBalance }) => {
@@ -14,6 +15,7 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
       [field]: value
     });
   };
+  const {currencySymbol} = settings;
 
   const totalCustomers = customers?.length || 0;
   const totalSales = customers?.reduce((sum, customer) => sum + (customer.sales || 0), 0) || 0;
@@ -488,7 +490,7 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                         </Box>
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 500 }}>
-                        ${totalSales.toLocaleString()}
+                        {currencySymbol} {totalSales.toLocaleString()}
                       </TableCell>
                       <TableCell align="center">
                         <Chip label="Available" size="small" color="info" />
@@ -505,7 +507,7 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                         </Box>
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 500 }}>
-                        ${maxSalesCapacity.toLocaleString()}
+                      {currencySymbol} {maxSalesCapacity.toLocaleString()}
                       </TableCell>
                       <TableCell align="center">
                         <Chip
@@ -526,7 +528,7 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                         </Box>
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 500 }}>
-                        ${minSalesRequired.toLocaleString()}
+                      {currencySymbol} {minSalesRequired.toLocaleString()}
                       </TableCell>
                       <TableCell align="center">
                         <Chip
@@ -760,7 +762,7 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                         {territory.totalSales && (
                           <Chip
                             icon={<AttachMoney fontSize="small" />}
-                            label={`$${territory.totalSales.toLocaleString()}`}
+                            label={`${currencySymbol} ${territory.totalSales.toLocaleString()}`}
                             size='medium'
                             color={
                               isOverSales ? 'error' :
@@ -831,13 +833,13 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
                       💰 Sales Overview
                     </Typography>
                     <Typography variant='body2' color='success.700' sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                      📊 Total Sales: ${territories.reduce((sum, t) => sum + (t.totalSales || 0), 0).toLocaleString()}
+                      📊 Total Sales: S/ {territories.reduce((sum, t) => sum + (t.totalSales || 0), 0).toLocaleString()}
                     </Typography>
                     <Typography variant='body2' color='success.700' sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                      � Sales Range: ${Math.min(...territories.map(t => t.totalSales || 0)).toLocaleString()} - ${Math.max(...territories.map(t => t.totalSales || 0)).toLocaleString()}
+                      � Sales Range: S/ {Math.min(...territories.map(t => t.totalSales || 0)).toLocaleString()} - ${Math.max(...territories.map(t => t.totalSales || 0)).toLocaleString()}
                     </Typography>
                     <Typography variant='body2' color='success.700' sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                      � Avg Sales/Territory: ${Math.round(territories.reduce((sum, t) => sum + (t.totalSales || 0), 0) / territories.length).toLocaleString()}
+                      � Avg Sales/Territory: S/ {Math.round(territories.reduce((sum, t) => sum + (t.totalSales || 0), 0) / territories.length).toLocaleString()}
                     </Typography>
                   </Box>
                 )}

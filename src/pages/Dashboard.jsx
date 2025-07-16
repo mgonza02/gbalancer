@@ -1,4 +1,4 @@
-import { Box, Container, Grid, Paper } from '@mui/material';
+import { Box, Grid, Paper } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -16,7 +16,7 @@ const Dashboard = () => {
   const [controls, setControls] = useState(defaultBalancerConfig);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  console.log('App initialized with customers:', customers);
+  // console.log('App initialized with customers:', customers);
 
   // Load balance data from history if passed via navigation state
   useEffect(() => {
@@ -70,8 +70,7 @@ const Dashboard = () => {
   };
 
   return (
-    <Box sx={{ flex: 1, py: { xs: 2, md: 3 } }}>
-      <Container maxWidth='xl' sx={{ height: '100%' }}>
+
         <Grid container spacing={{ xs: 2, md: 3 }} sx={{ height: '100%' }}>
           {/* Controls Panel */}
           <Grid  size={{ xs: 12, lg: 4, xl: 3 }}>
@@ -124,8 +123,6 @@ const Dashboard = () => {
             </Paper>
           </Grid>
         </Grid>
-      </Container>
-    </Box>
   );
 };
 
