@@ -108,3 +108,5 @@ dist
 
 # wincompare file
 .bak
+src/data/dummy-customers.js
+src/data/dummy-customers copy.js
