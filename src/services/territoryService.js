@@ -19,6 +19,122 @@ function validateClusters(customerGroups, maxCust, minCust, maxSales, minSales, 
 }
 
 /**
+ * Sanitizes a polygon path to ensure it has valid latitude/longitude coordinates.
+ * @param {Array<Array<number>>} path - The polygon path from convex-hull.
+ * @returns {Array<{lat: number, lng: number}>} - A valid polygon path.
+ */
+function sanitizePolygonPath(aristPath, originalCoordinates) {
+  const paths = aristPath.map(point => {
+    const startPoint = point[0];
+    const endPoint = point[1];
+    // Ensure coordinates are within valid ranges
+    return {
+      lat: originalCoordinates[startPoint][0],
+      lng: originalCoordinates[startPoint][1]
+    };
+  });
+  // insert last point to close the polygon
+  if (paths.length > 0) {
+    const lastPoint = aristPath[aristPath.length - 1][1];
+    if (lastPoint) {
+      paths.push({
+        lat: originalCoordinates[lastPoint][0],
+        lng: originalCoordinates[lastPoint][1]
+      });
+     }
+  }
+  return paths;
+}
+
+/**
+ * Rotates a point around a center.
+ * @param {{lat: number, lng: number}} point - The point to rotate.
+ * @param {{lat: number, lng: number}} center - The center of rotation.
+ * @param {number} angle - The rotation angle in radians.
+ * @returns {{lat: number, lng: number}} - The rotated point.
+ */
+function rotatePoint(point, center, angle) {
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const dx = point.lng - center.lng;
+  const dy = point.lat - center.lat;
+  return {
+    lat: center.lat + dy * cos - dx * sin,
+    lng: center.lng + dx * cos + dy * sin
+  };
+}
+
+/**
+ * Validates a polygon to ensure it is not self-intersecting and has valid coordinates.
+ * @param {Array<{lat: number, lng: number}>} polygonPath - The array of points forming the polygon.
+ * @returns {boolean} - True if the polygon is valid, false otherwise.
+ */
+function validatePolygon(polygonPath) {
+  if (polygonPath.length < 3) return true; // Not enough points to self-intersect
+
+  for (let i = 0; i < polygonPath.length; i++) {
+    const p1 = polygonPath[i];
+    const p2 = polygonPath[(i + 1) % polygonPath.length];
+
+    for (let j = i + 1; j < polygonPath.length; j++) {
+      const p3 = polygonPath[j];
+      const p4 = polygonPath[(j + 1) % polygonPath.length];
+
+      // Don't check adjacent segments
+      if (p1 === p3 || p1 === p4 || p2 === p3 || p2 === p4) {
+        continue;
+      }
+
+      if (segmentsIntersect(p1, p2, p3, p4)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+/**
+ * Checks if two line segments intersect.
+ */
+function segmentsIntersect(p1, p2, p3, p4) {
+  const o1 = orientation(p1, p2, p3);
+  const o2 = orientation(p1, p2, p4);
+  const o3 = orientation(p3, p4, p1);
+  const o4 = orientation(p3, p4, p2);
+
+  if (o1 !== o2 && o3 !== o4) return true;
+
+  // Handle collinear cases
+  if (o1 === 0 && onSegment(p1, p3, p2)) return true;
+  if (o2 === 0 && onSegment(p1, p4, p2)) return true;
+  if (o3 === 0 && onSegment(p3, p1, p4)) return true;
+  if (o4 === 0 && onSegment(p3, p2, p4)) return true;
+
+  return false;
+}
+
+/**
+ * Finds the orientation of the ordered triplet (p, q, r).
+ */
+function orientation(p, q, r) {
+  const val = (q.lat - p.lat) * (r.lng - q.lng) - (q.lng - p.lng) * (r.lat - q.lat);
+  if (val === 0) return 0; // Collinear
+  return val > 0 ? 1 : 2; // Clockwise or Counterclockwise
+}
+
+/**
+ * Checks if point q lies on segment pr.
+ */
+function onSegment(p, q, r) {
+  return (
+    q.lng <= Math.max(p.lng, r.lng) &&
+    q.lng >= Math.min(p.lng, r.lng) &&
+    q.lat <= Math.max(p.lat, r.lat) &&
+    q.lat >= Math.min(p.lat, r.lat)
+  );
+}
+
+/**
  * Generates balanced territories using K-means clustering and convex hull calculation
  * @param {Array} customers - Array of customer objects with id, name, location, and sales
  * @param {Object} options - Configuration options
@@ -43,6 +159,9 @@ export const generateTerritories = async (customers, {
   territorySize = 0,
   maxTerritories = 0
 }) => {
+
+
+
   // Input validation
   if (!customers || customers.length === 0) {
     return { error: 'No customers provided' };
@@ -351,8 +470,11 @@ export const generateTerritories = async (customers, {
         const clusterCoordinates = customerGroup.map(customer => [customer.location.lat, customer.location.lng]);
 
         try {
+          console.log(`Calculating convex hull for cluster ${clusterIdx} with ${customerGroup.length} customers`, clusterCoordinates);
           const hull = convexHull(clusterCoordinates);
-          polygonPath = hull.map(([lat, lng]) => ({ lat, lng }));
+          console.log(`Convex hull for cluster ${clusterIdx}:`, hull);
+          polygonPath = sanitizePolygonPath(hull, clusterCoordinates);
+          console.log(`polygonPath for cluster ${clusterIdx}:`, polygonPath);
         } catch (hullError) {
           console.warn(`Convex hull failed for cluster ${clusterIdx}, falling back to bounding box:`, hullError);
 
@@ -385,6 +507,7 @@ export const generateTerritories = async (customers, {
       territories.push({
         id: clusterIdx + 1,
         path: polygonPath,
+        name: `Territory ${clusterIdx + 1}`,
         customers: customerGroup,
         customerCount: customerGroup.length,
         totalSales: totalSales,
