@@ -12,14 +12,16 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
   const handleInputChange = (field, value) => {
     onControlsChange({
       ...controls,
-      [field]: value
+      [field]: value,
+      // minTerritories : ["numSellers", 'minTerritoriesPerSeller'].include(field) ?
+      minTerritories :   field==='numSellers' ? ((controls.minTerritoriesPerSeller||0)*value ): (field==="minTerritoriesPerSeller" ? (controls.numSellers||0)*value : controls.minTerritories)
     });
   };
   const {currencySymbol} = settings;
-
+// console.log ('controls', controls );
   const totalCustomers = customers?.length || 0;
   const totalSales = customers?.reduce((sum, customer) => sum + (customer.sales || 0), 0) || 0;
-  const totalCapacity = (controls.numSellers || 0) * (controls.maxCustomersPerPolygon || 0);
+  const totalCapacity = (controls.minTerritories || 0) * (controls.maxCustomersPerPolygon || 0);
   const minCapacity = (controls.numSellers || 0) * (controls.minCustomersPerPolygon || 0);
   const minTerritories = (controls.numSellers || 0) * (controls.minTerritoriesPerSeller || 0);
   const maxSalesCapacity = controls.maxSalesPerTerritory > 0 ? (controls.numSellers || 0) * controls.maxSalesPerTerritory : 0;

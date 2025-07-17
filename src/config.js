@@ -22,10 +22,11 @@ export const settings = {
 };
 
 export const defaultBalancerConfig = {
-  numSellers: 150,
+  numSellers: 21,
   customers: 500,
-  minTerritoriesPerSeller: 2,
+  minTerritoriesPerSeller: 6,
   territorySize: 1000,
+  minTerritories: 126,
   maxTerritories: 1000,
   maxCustomersPerPolygon: 500,
   minCustomersPerPolygon: 10,

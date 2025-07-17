@@ -16,7 +16,7 @@ import { kmeans } from 'ml-kmeans';
  * @returns {Object} - Either success object with territories or error object
  */
 export const generateTerritories = async (customers, {
-  numSellers,
+  minTerritories,
   maxCustomersPerPolygon,
   minCustomersPerPolygon = 0,
   maxSalesPerTerritory = 0,
@@ -30,8 +30,8 @@ export const generateTerritories = async (customers, {
     return { error: 'No customers provided' };
   }
 
-  if (!numSellers || numSellers <= 0) {
-    return { error: 'Number of sellers must be greater than 0' };
+  if (!minTerritories || minTerritories <= 0) {
+    return { error: 'Number of territories must be greater than 0' };
   }
 
   if (!maxCustomersPerPolygon || maxCustomersPerPolygon <= 0) {
@@ -79,7 +79,7 @@ export const generateTerritories = async (customers, {
   }
 
   // Check if it's mathematically possible to assign all customers
-  const totalCapacity = numSellers * maxCustomersPerPolygon;
+  const totalCapacity = minTerritories * maxCustomersPerPolygon;
   if (totalCapacity < customers.length) {
     return {
       error: `Settings do not allow for all customers to be assigned. Need capacity for ${customers.length} customers but only have ${totalCapacity} slots. Increase sellers or max customers per territory.`
@@ -91,7 +91,7 @@ export const generateTerritories = async (customers, {
     const coordinates = customers.map(customer => [customer.location.lat, customer.location.lng]);
 
     // Perform K-means clustering
-    const kmeansResult = kmeans(coordinates, numSellers, {
+    const kmeansResult = kmeans(coordinates, minTerritories, {
       initialization: 'kmeans++',
       maxIterations: 100,
       tolerance: 1e-6
