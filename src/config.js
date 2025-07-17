@@ -30,7 +30,7 @@ export const defaultBalancerConfig = {
   maxTerritories: 1000,
   maxCustomersPerPolygon: 500,
   minCustomersPerPolygon: 10,
-  maxSalesPerTerritory: 70000,
+  maxSalesPerTerritory: 120000,
   minSalesPerTerritory: 20
   /*
   For next version, we will add the following properties to the config:
