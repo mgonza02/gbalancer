@@ -2,6 +2,23 @@ import convexHull from 'convex-hull';
 import { kmeans } from 'ml-kmeans';
 
 /**
+ * Validate cluster groups against customer and sales constraints
+ */
+function validateClusters(customerGroups, maxCust, minCust, maxSales, minSales, allowOversize) {
+  const violations = { oversize: [], undersize: [], oversales: [], undersales: [] };
+  Object.entries(customerGroups).forEach(([idx, group]) => {
+    const count = group.length;
+    const totalSales = group.reduce((sum, c) => sum + (c.sales || 0), 0);
+    if (!allowOversize && count > maxCust) violations.oversize.push(idx);
+    if (minCust > 0 && count < minCust) violations.undersize.push(idx);
+    if (maxSales > 0 && totalSales > maxSales) violations.oversales.push(idx);
+    if (minSales > 0 && totalSales < minSales) violations.undersales.push(idx);
+  });
+  const hardViolations = violations.undersize.length + violations.oversales.length + violations.undersales.length;
+  return { violations, hardViolations };
+}
+
+/**
  * Generates balanced territories using K-means clustering and convex hull calculation
  * @param {Array} customers - Array of customer objects with id, name, location, and sales
  * @param {Object} options - Configuration options
@@ -18,6 +35,7 @@ import { kmeans } from 'ml-kmeans';
 export const generateTerritories = async (customers, {
   minTerritories,
   maxCustomersPerPolygon,
+  allowOversize = true,
   minCustomersPerPolygon = 0,
   maxSalesPerTerritory = 0,
   minSalesPerTerritory = 0,
@@ -87,24 +105,51 @@ export const generateTerritories = async (customers, {
   }
 
   try {
-    // Prepare data for K-means (convert to coordinate arrays)
-    const coordinates = customers.map(customer => [customer.location.lat, customer.location.lng]);
-
-    // Perform K-means clustering
-    const kmeansResult = kmeans(coordinates, minTerritories, {
-      initialization: 'kmeans++',
-      maxIterations: 100,
-      tolerance: 1e-6
-    });
-
-    // Group customers by their assigned cluster
-    const customerGroups = {};
-    kmeansResult.clusters.forEach((clusterIndex, customerIndex) => {
-      if (!customerGroups[clusterIndex]) {
-        customerGroups[clusterIndex] = [];
+    // Prepare data for K-means
+    const coordinates = customers.map(c => [c.location.lat, c.location.lng]);
+    let kmeansResult, customerGroups, validation;
+    const iterationErrors = [];
+    // Attempt clustering up to 10 times
+    for (let attempt = 1; attempt <= 10; attempt++) {
+      console.log(`Clustering attempt ${attempt}/10`);
+      kmeansResult = kmeans(coordinates, minTerritories, {
+        initialization: attempt === 1 ? 'kmeans++' : 'random',
+        maxIterations: 100,
+        tolerance: 1e-6,
+        seed: attempt
+      });
+      // Group by cluster
+      customerGroups = {};
+      kmeansResult.clusters.forEach((ci, idx) => {
+        if (!customerGroups[ci]) customerGroups[ci] = [];
+        customerGroups[ci].push(customers[idx]);
+      });
+      // Validate this grouping
+      validation = validateClusters(
+        customerGroups,
+        maxCustomersPerPolygon,
+        minCustomersPerPolygon,
+        maxSalesPerTerritory,
+        minSalesPerTerritory,
+        allowOversize
+      );
+      // Record and log violations
+      if (validation.hardViolations > 0) {
+        iterationErrors.push({ attempt, violations: validation.violations });
+        console.error(`Violations detected on attempt ${attempt}:`, validation.violations);
       }
-      customerGroups[clusterIndex].push(customers[customerIndex]);
-    });
+      if (validation.hardViolations === 0) {
+        console.log('Clusters satisfy hard constraints');
+        break;
+      }
+      if (attempt === 10) {
+        return {
+          error: 'Unable to satisfy constraints after 10 clustering attempts. Consider relaxing constraints.',
+          suggestions: 'Review min/max customer and sales parameters or enable allowOversize to permit flexibility.',
+          iterationErrors
+        };
+      }
+    }
 
     // Validate cluster sizes and sales constraints
     const oversizedClusters = [];
@@ -153,7 +198,8 @@ export const generateTerritories = async (customers, {
         .map(cluster => `Territory ${cluster.territoryId} has ${cluster.customerCount} customers`)
         .join(', ');
       return {
-        error: `Automated clustering resulted in oversized territories (${oversizedDetails}). Please adjust parameters or review customer distribution.`
+        error: `Automated clustering resulted in oversized territories (${oversizedDetails}).`,
+        suggestions: 'Increase maxCustomersPerPolygon or enable allowOversize to permit larger clusters.'
       };
     }
 
@@ -162,7 +208,8 @@ export const generateTerritories = async (customers, {
         .map(cluster => `Territory ${cluster.territoryId} has $${cluster.totalSales.toLocaleString()} in sales (${cluster.customerCount} customers)`)
         .join(', ');
       return {
-        error: `Automated clustering resulted in territories exceeding sales limits (${oversalesDetails}). Max allowed: $${maxSalesPerTerritory.toLocaleString()}. Please adjust parameters or review customer distribution.`
+        error: `Automated clustering resulted in territories exceeding sales limits (${oversalesDetails}).`,
+        suggestions: 'Increase maxSalesPerTerritory to accommodate higher sales clusters.'
       };
     }
 
@@ -171,7 +218,8 @@ export const generateTerritories = async (customers, {
         .map(cluster => `Territory ${cluster.territoryId} has $${cluster.totalSales.toLocaleString()} in sales (${cluster.customerCount} customers)`)
         .join(', ');
       return {
-        error: `Automated clustering resulted in territories below minimum sales requirements (${undersalesDetails}). Min required: $${minSalesPerTerritory.toLocaleString()}. Please adjust parameters or review customer distribution.`
+        error: `Automated clustering resulted in territories below minimum sales requirements (${undersalesDetails}).`,
+        suggestions: 'Decrease minSalesPerTerritory or review customer sales data to meet minimum sales requirements.'
       };
     }
 
