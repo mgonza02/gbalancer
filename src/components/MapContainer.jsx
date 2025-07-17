@@ -351,6 +351,8 @@ const MapContainer = ({ customers, territories }) => {
                   id: territory.id,
                   pathLength: territory.path?.length,
                   pathSample: territory.path?.slice(0, 2),
+                  name: territory.name,
+                  paths: territory.path,
                   customerCount: territory.customerCount,
                   centroid: territory.centroid
                 });
