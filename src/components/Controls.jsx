@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { settings } from '../config';
 import SaveBalanceDialog from './SaveBalanceDialog';
 
-const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, territories, customers, loading, onLoadBalance }) => {
+const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, territories, customers, loading, onLoadBalance, customerDataLoaded = true }) => {
   const navigate = useNavigate();
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const handleInputChange = (field, value) => {
@@ -568,7 +568,7 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
         <Button
           variant='contained'
           onClick={onGenerateTerritories}
-          disabled={!isValid || loading}
+          disabled={!isValid || loading || !customerDataLoaded || customers.length === 0}
           fullWidth
           size='large'
           sx={{
@@ -591,7 +591,10 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
             transition: 'all 0.3s ease-in-out'
           }}
         >
-          {loading ? 'Generating Territories...' : 'Generate Territories'}
+          {loading ? 'Generating Territories...' :
+           !customerDataLoaded ? 'Load Customer Data First' :
+           customers.length === 0 ? 'No Customer Data Available' :
+           'Generate Territories'}
         </Button>
 
         {/* Action Buttons */}

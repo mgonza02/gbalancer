@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "customer_name": "Sample Customer 1",
+    "document_number": "12345678",
+    "lat": "-16.408155",
+    "lng": "-71.474054",
+    "sales": 183.55
+  },
+  {
+    "id": 2,
+    "customer_name": "Sample Customer 2",
+    "document_number": "87654321",
+    "lat": "-16.392622",
+    "lng": "-71.479856",
+    "sales": 187.73
+  },
+  {
+    "id": 3,
+    "customer_name": "Sample Customer 3",
+    "document_number": "11223344",
+    "lat": "-16.404702",
+    "lng": "-71.496794",
+    "sales": 128.01
+  },
+  {
+    "id": 4,
+    "customer_name": "Sample Customer 4",
+    "document_number": "44332211",
+    "lat": "-16.404889",
+    "lng": "-71.495391",
+    "sales": 154.18
+  },
+  {
+    "id": 5,
+    "customer_name": "Sample Customer 5",
+    "document_number": "55667788",
+    "lat": "-16.40815",
+    "lng": "-71.479708",
+    "sales": 171.88
+  }
+]

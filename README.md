@@ -4,21 +4,63 @@
 
 ## Features
 
+- **Customer Data Source Selection**: Choose from sample data, JSON file upload, or API integration
 - **Interactive Google Maps Integration**: View customers and territories on a real map
 - **K-means Clustering**: Automatically cluster customers into balanced territories
 - **Convex Hull Visualization**: Generate polygon boundaries for each territory
 - **Real-time Validation**: Ensure territories don't exceed customer limits
 - **Interactive Territory Info**: Click on territories to see detailed information
+- **Data Persistence**: Customer data is automatically saved to browser storage
 - **Responsive Design**: Works on desktop and mobile devices
 
 ## Core User Story
 
 As a sales manager, you can:
-1. Load a set of 100 geolocated customers onto a map (San Francisco Bay Area)
-2. Specify the number of available sellers
-3. Set the maximum number of customers any single seller should handle
-4. Click "Generate Territories" to automatically partition customers into balanced, geographically clustered territories
+1. **Load customer data** from multiple sources:
+   - Use pre-configured sample data
+   - Upload your own JSON file (up to 5MB)
+   - Fetch data from your API endpoint
+2. **Configure territories** by specifying:
+   - Number of available sellers
+   - Maximum customers per seller
+   - Territory size and sales constraints
+3. **Generate territories** automatically to partition customers into balanced, geographically clustered territories
+4. **Visualize results** on an interactive map with territory boundaries
 5. View the resulting territories as colored polygons on the map
+
+## Customer Data Source Selection
+
+The application now supports multiple ways to load customer data:
+
+### 1. Sample Data
+- **Use case**: Quick testing and demonstrations
+- **Action**: Click "Load Sample Data" button
+- **Data**: Pre-configured customer data from Arequipa, Peru region
+
+### 2. Upload JSON File
+- **Use case**: Import your own customer data
+- **Requirements**:
+  - JSON file format only
+  - Maximum file size: 5MB
+  - Must contain array of customer objects
+- **Required fields**: `id`, `customer_name` (or `name`), `lat`, `lng`, `sales`
+
+### 3. From API
+- **Use case**: Real-time data integration
+- **Configuration**:
+  - API endpoint URL (required)
+  - Bearer token for authentication (optional)
+- **API Requirements**: Must return JSON array of customer objects
+
+### Data Persistence
+- All customer data is automatically saved to browser's localStorage
+- Data persists across browser sessions
+- Application automatically loads saved data on startup
+
+For detailed information about the data source feature, see [DATA_SOURCE_FEATURE.md](DATA_SOURCE_FEATURE.md).
+
+### Example JSON File
+A sample JSON file (`sample-customer-data.json`) is provided in the project root for testing the upload functionality.
 
 ## Setup Instructions
 

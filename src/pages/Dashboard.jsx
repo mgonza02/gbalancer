@@ -4,19 +4,75 @@ import { useLocation } from 'react-router-dom';
 
 // Project imports
 import Controls from '../components/Controls';
+import DataSourceSelector from '../components/DataSourceSelector';
 import MapContainer from '../components/MapContainer';
 import { defaultBalancerConfig } from '../config';
 import { handleMakeCustomers } from '../data/mockCustomers';
+import {
+  hasCustomerData,
+  loadCustomerData,
+  normalizeCustomerData,
+  saveCustomerData
+} from '../services/customerDataService';
 import { generateTerritories } from '../services/territoryService';
 
 const Dashboard = () => {
   const location = useLocation();
-  const [customers] = useState(handleMakeCustomers());
+  const [customers, setCustomers] = useState([]);
   const [territories, setTerritories] = useState([]);
   const [controls, setControls] = useState(defaultBalancerConfig);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  // console.log('App initialized with customers:', customers);
+  const [dataSource, setDataSource] = useState('sample');
+  const [customerDataLoaded, setCustomerDataLoaded] = useState(false);
+
+  // Initialize customer data on component mount
+  useEffect(() => {
+    const initializeCustomerData = () => {
+      // First check if we have data in localStorage
+      if (hasCustomerData()) {
+        const savedData = loadCustomerData();
+        if (savedData && Array.isArray(savedData)) {
+          const normalizedData = normalizeCustomerData(savedData);
+          setCustomers(normalizedData);
+          setCustomerDataLoaded(true);
+          setDataSource('stored'); // Indicate data came from storage
+          return;
+        }
+      }
+
+      // If no saved data, load sample data by default
+      const sampleData = handleMakeCustomers();
+      const normalizedData = normalizeCustomerData(sampleData);
+      setCustomers(normalizedData);
+      setCustomerDataLoaded(true);
+      setDataSource('sample');
+
+      // Save sample data to localStorage
+      saveCustomerData(normalizedData);
+    };
+
+    initializeCustomerData();
+  }, []);
+
+  // Handle customer data loading from DataSourceSelector
+  const handleCustomerDataLoad = (newCustomerData, source) => {
+    try {
+      const normalizedData = normalizeCustomerData(newCustomerData);
+      setCustomers(normalizedData);
+      setDataSource(source);
+      setCustomerDataLoaded(true);
+      setError('');
+
+      // Clear any existing territories since data has changed
+      setTerritories([]);
+
+      console.log(`Customer data loaded from ${source}:`, normalizedData.length, 'customers');
+    } catch (err) {
+      setError('Failed to load customer data: ' + err.message);
+      console.error('Customer data load error:', err);
+    }
+  };
 
   // Load balance data from history if passed via navigation state
   useEffect(() => {
@@ -29,6 +85,11 @@ const Dashboard = () => {
   }, [location.state]);
 
   const handleGenerateTerritories = async () => {
+    if (!customerDataLoaded || customers.length === 0) {
+      setError('Please load customer data first');
+      return;
+    }
+
     setError('');
     setLoading(true);
 
@@ -92,6 +153,14 @@ const Dashboard = () => {
                 },
               },
             }}>
+              {/* Data Source Selector */}
+              <DataSourceSelector
+                onCustomerDataLoad={handleCustomerDataLoad}
+                currentDataSource={dataSource}
+                disabled={loading}
+              />
+
+              {/* Territory Controls */}
               <Controls
                 controls={controls}
                 onControlsChange={handleControlsChange}
@@ -101,6 +170,7 @@ const Dashboard = () => {
                 territories={territories}
                 customers={customers}
                 loading={loading}
+                customerDataLoaded={customerDataLoaded}
               />
             </Box>
           </Grid>
