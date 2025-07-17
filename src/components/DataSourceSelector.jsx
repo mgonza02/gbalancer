@@ -91,7 +91,14 @@ const DataSourceSelector = ({ onCustomerDataLoad, currentDataSource, disabled = 
           throw new Error(`Customer at index ${index} is missing required 'customer_name' or 'name' field`);
         }
         if (!customer.lat || !customer.lng) {
-          throw new Error(`Customer at index ${index} is missing required 'lat' or 'lng' coordinates`);
+          return null;
+          // throw new Error(`Customer at index ${index} is missing required 'lat' or 'lng' coordinates`);
+        }
+        const lat = parseFloat(customer.lat);
+        const lng = parseFloat(customer.lng);
+        if (isNaN(lat) || isNaN(lng)|| lat ===0 || lng === 0) {
+          return null;
+          // throw new Error(`Customer at index ${index} has invalid 'lat' or 'lng' coordinates`);
         }
         if (!customer.sales) {
           throw new Error(`Customer at index ${index} is missing required 'sales' field`);
@@ -110,7 +117,7 @@ const DataSourceSelector = ({ onCustomerDataLoad, currentDataSource, disabled = 
             lng: parseFloat(customer.lng)
           }
         };
-      });
+      }).filter(Boolean); // Remove any null entries
 
       // Save to localStorage
       localStorage.setItem('customerData', JSON.stringify(validatedData));
