@@ -11,10 +11,10 @@ import TerritoryDataGrid from '../components/TerritoryDataGrid';
 import { defaultBalancerConfig } from '../config';
 import { handleMakeCustomers } from '../data/mockCustomers';
 import {
-    hasCustomerData,
-    loadCustomerData,
-    normalizeCustomerData,
-    saveCustomerData
+  hasCustomerData,
+  loadCustomerData,
+  normalizeCustomerData,
+  saveCustomerData
 } from '../services/customerDataService';
 import TerritoryDataService from '../services/territoryDataService';
 import { generateTerritories } from '../services/territoryService';
@@ -158,9 +158,7 @@ const Dashboard = () => {
     setTerritories(prev =>
       TerritoryDataService.updateTerritoryField(prev, territoryId, field, value)
     );
-  };
-
-  // Handle territory polygon updates from map editing
+  };  // Handle territory polygon updates from map editing
   const handleTerritoryPolygonUpdate = (territoryId, updates) => {
     setTerritories(prev => prev.map(territory =>
       territory.id === territoryId
@@ -170,6 +168,26 @@ const Dashboard = () => {
 
     // Auto-disable edit mode after successful save to provide clear feedback
     setEditMode(false);
+  };
+
+  // Handle new territory creation
+  const handleTerritoryCreate = (newTerritory) => {
+    setTerritories(prev => [...prev, newTerritory]);
+
+    // Add the new territory to selected territories so it's visible
+    setSelectedTerritories(prev => [...prev, newTerritory.id]);
+
+    console.log('New territory created:', newTerritory);
+  };
+
+  // Handle territory deletion
+  const handleTerritoryDelete = (territoryId) => {
+    setTerritories(prev => prev.filter(territory => territory.id !== territoryId));
+
+    // Remove the deleted territory from selected territories
+    setSelectedTerritories(prev => prev.filter(id => id !== territoryId));
+
+    console.log('Territory deleted:', territoryId);
   };
 
   // Handle save territories from DataGrid
@@ -305,6 +323,8 @@ const Dashboard = () => {
             customers={customers}
             territories={showTerritories ? territories.filter(t => selectedTerritories.includes(t.id)) : []}
             onTerritoryUpdate={handleTerritoryPolygonUpdate}
+            onTerritoryCreate={handleTerritoryCreate}
+            onTerritoryDelete={handleTerritoryDelete}
             editMode={editMode}
             confirmEdits={controls.confirmPolygonEdits}
           />
@@ -364,6 +384,7 @@ const Dashboard = () => {
               onToggleTerritories={setShowTerritories}
               selectedTerritories={selectedTerritories}
               onSelectedTerritoriesChange={setSelectedTerritories}
+              onTerritoryDelete={handleTerritoryDelete} // Pass the delete handler
             />
           </Box>
         </Paper>
