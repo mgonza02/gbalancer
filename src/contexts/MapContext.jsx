@@ -101,17 +101,56 @@ export const MapContextProvider = ({
   const calculatePolygonArea = useCallback(path => {
     if (!path || path.length < 3) return 0;
 
+    // Use Google Maps geometry library for accurate area calculation
+    if (window.google?.maps?.geometry?.spherical) {
+      try {
+        console.log('Using Google Maps geometry library for area calculation');
+        // Convert path to Google Maps LatLng objects
+        const googlePath = path.map(point =>
+          new window.google.maps.LatLng(point.lat, point.lng)
+        );
+
+        // Calculate area using Google Maps spherical geometry
+        const areaInSquareMeters = window.google.maps.geometry.spherical.computeArea(googlePath);
+
+        // Convert to square kilometers
+        const areaInKm2 = areaInSquareMeters / 1000000;
+
+        console.log('Area calculation:', {
+          squareMeters: areaInSquareMeters,
+          squareKilometers: areaInKm2,
+          formattedArea: `${areaInKm2.toFixed(2)} km²`
+        });
+
+        return areaInKm2;
+      } catch (error) {
+        console.error('Error calculating polygon area:', error);
+        return 0;
+      }
+    } else {
+      console.warn('Google Maps geometry library not available:', {
+        google: !!window.google,
+        maps: !!window.google?.maps,
+        geometry: !!window.google?.maps?.geometry,
+        spherical: !!window.google?.maps?.geometry?.spherical
+      });
+    }
+
+    // Fallback to simple calculation if Google Maps geometry is not available
+    console.warn('Google Maps geometry library not available, using fallback calculation');
     let area = 0;
     for (let i = 0; i < path.length; i++) {
       const j = (i + 1) % path.length;
       area += path[i].lat * path[j].lng;
       area -= path[j].lat * path[i].lng;
     }
-    return Math.abs(area) / 2;
+    // Convert to approximate km² (very rough approximation)
+    return Math.abs(area) / 2 * 12100;
   }, []);
 
   const polygonAreaToKm2 = useCallback(area => {
-    return (area * 12100).toFixed(2);
+    // Since calculatePolygonArea now returns km², just format it
+    return parseFloat(area).toFixed(2);
   }, []);
 
   // Polygon click handler
@@ -234,8 +273,10 @@ export const MapContextProvider = ({
       console.log('Territory data calculated:', {
         centroid,
         area,
+        areaFormatted: `${area.toFixed(2)} km²`,
         customersFound: customersInsidePolygon.length,
-        totalSales
+        totalSales,
+        customerDensity: area > 0 ? (customersInsidePolygon.length / area).toFixed(2) : 0
       });
 
       // Call the onTerritoryCreate callback if provided
@@ -254,6 +295,7 @@ export const MapContextProvider = ({
           customers: customersInsidePolygon,
           customerCount: customersInsidePolygon.length,
           totalSales: totalSales,
+          customerDensity: area > 0 ? customersInsidePolygon.length / area : 0,
           zone: 'A',
           color: currentColors[colorIndex]
         };

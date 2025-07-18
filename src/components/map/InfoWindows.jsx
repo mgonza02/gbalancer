@@ -1,15 +1,15 @@
 import { AttachMoney, Close, Delete, Edit, Person } from '@mui/icons-material';
 import {
-    Avatar,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Chip,
-    Divider,
-    IconButton,
-    Stack,
-    Typography
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Divider,
+  IconButton,
+  Stack,
+  Typography
 } from '@mui/material';
 import { useCallback, useMemo } from 'react';
 import { useMapContext } from '../../contexts/MapContext';
@@ -67,13 +67,20 @@ export default function InfoWindows({
   const territoryMetrics = useMemo(() => {
     if (!activePolygon) return null;
 
+    // Calculate density if not present (backwards compatibility)
+    let density = activePolygon.customerDensity || 0;
+    if (!density && activePolygon.area > 0 && activePolygon.customerCount > 0) {
+      density = activePolygon.customerCount / activePolygon.area;
+    }
+
     return {
       customers: activePolygon.customerCount || 0,
       sales: activePolygon.totalSales || 0,
       avgOrderValue: activePolygon.totalSales && activePolygon.customerCount
         ? activePolygon.totalSales / activePolygon.customerCount
         : 0,
-      density: activePolygon.customerDensity || 0
+      density: density,
+      area: activePolygon.area || 0
     };
   }, [activePolygon]);
 
@@ -192,10 +199,29 @@ export default function InfoWindows({
                   </Box>
                   <Box sx={{ flex: 1 }}>
                     <Typography variant="caption" color="text.secondary">
+                      Area
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {territoryMetrics.area.toFixed(2)} km²
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
                       Customer Density
                     </Typography>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
                       {territoryMetrics.density.toFixed(2)}/km²
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Territory ID
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {activePolygon.id}
                     </Typography>
                   </Box>
                 </Box>
