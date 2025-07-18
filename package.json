@@ -41,6 +41,7 @@
     "@mui/material": "7.1.2",
     "@mui/system": "7.1.1",
     "@mui/x-charts": "8.6.0",
+    "@mui/x-data-grid": "^8.8.0",
     "@react-google-maps/api": "^2.20.7",
     "@vitejs/plugin-react": "4.5.2",
     "convex-hull": "^1.0.3",
