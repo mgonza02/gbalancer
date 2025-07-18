@@ -1,12 +1,41 @@
-import { Add, Delete, Download, LocationOn, People, Save, ZoomOutMap } from '@mui/icons-material';
-import { Alert, Box, Button, Card, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Fab, Fade, IconButton, Paper, TextField, Tooltip, Typography } from '@mui/material';
+import { Add, Delete, Download, ExpandMore, LocationOn, People, Save, ZoomOutMap } from '@mui/icons-material';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Box,
+  Button,
+  Card,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Fab,
+  Fade,
+  IconButton,
+  Paper,
+  TextField,
+  Tooltip,
+  Typography
+} from '@mui/material';
 import { GoogleMap, InfoWindowF, MarkerF, PolygonF, useJsApiLoader } from '@react-google-maps/api';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { settings } from '../config';
 
 const LIBRARIES = ['geometry', 'places', 'drawing'];
 
-const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = false, confirmEdits = true, onTerritoryCreate, onTerritoryDelete }) => {
+const MapContainer = ({
+  customers,
+  territories,
+  onTerritoryUpdate,
+  editMode = false,
+  confirmEdits = true,
+  onTerritoryCreate,
+  onTerritoryDelete
+}) => {
   const [activePolygon, setActivePolygon] = useState(null);
   const [activeMarker, setActiveMarker] = useState(null);
   const [hoveredPolygon, setHoveredPolygon] = useState(null);
@@ -49,11 +78,9 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
       '#2F855A', // Dark Green
       '#B794F6', // Light Purple
       '#F56565', // Light Red
-      '#48BB78',  // Light Green
+      '#48BB78', // Light Green
       '#ED8936', // Light Orange
-      '#63B3ED'   // Light Blue
-
-
+      '#63B3ED' // Light Blue
     ],
     []
   );
@@ -165,8 +192,10 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
       setDrawingManager(drawingManagerInstance);
 
       // Listen for polygon completion
-      window.google.maps.event.addListener(drawingManagerInstance, 'polygoncomplete', (polygon) => {
-        // Stop drawing mode
+      window.google.maps.event.addListener(drawingManagerInstance, 'polygoncomplete', polygon => {
+        console.log('Polygon completed');
+
+        // Stop drawing mode immediately
         drawingManagerInstance.setDrawingMode(null);
         setDrawingMode(false);
 
@@ -175,6 +204,19 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
 
         // Open dialog to name the territory
         setCreateDialogOpen(true);
+      });
+
+      // Listen for drawing mode changes to sync our state
+      window.google.maps.event.addListener(drawingManagerInstance, 'drawingmode_changed', () => {
+        const mode = drawingManagerInstance.getDrawingMode();
+        console.log('Drawing mode changed:', mode);
+
+        // Sync our state with the drawing manager's actual state
+        if (mode === null && drawingMode) {
+          setDrawingMode(false);
+        } else if (mode === window.google.maps.drawing.OverlayType.POLYGON && !drawingMode) {
+          setDrawingMode(true);
+        }
       });
 
       // Fit bounds if we have customers
@@ -280,120 +322,126 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
       const xj = polygon[j].lat;
       const yj = polygon[j].lng;
 
-      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+      if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
         inside = !inside;
       }
     }
     return inside;
   }, []);
 
-    // Function to calculate polygon centroid
-    const calculateCentroid = useCallback((path) => {
-      if (!path || path.length === 0) return { lat: 0, lng: 0 };
+  // Function to calculate polygon centroid
+  const calculateCentroid = useCallback(path => {
+    if (!path || path.length === 0) return { lat: 0, lng: 0 };
 
-      let lat = 0;
-      let lng = 0;
+    let lat = 0;
+    let lng = 0;
 
-      path.forEach(point => {
-        lat += point.lat;
-        lng += point.lng;
-      });
-
-      return {
-        lat: lat / path.length,
-        lng: lng / path.length
-      };
-    }, []);
-  // Function to recalculate customers within a territory (store pending changes)
-  const recalculateCustomersInTerritory = useCallback((territoryId, newPath) => {
-    if (!customers) return;
-
-    // Find customers that are inside the new polygon
-    const customersInside = customers.filter(customer =>
-      isPointInPolygon(customer.location, newPath)
-    );
-
-    // Calculate total sales
-    const totalSales = customersInside.reduce((sum, customer) => sum + (customer.sales || 0), 0);
-
-    // Find the original territory for comparison
-    const originalTerritory = territories.find(t => t.id === territoryId);
-    const originalCustomerCount = originalTerritory ? originalTerritory.customerCount : 0;
-    const originalSales = originalTerritory ? originalTerritory.totalSales : 0;
-
-    // Always store pending changes, but don't show dialog automatically
-    setPendingEdit({
-      territoryId,
-      newPath,
-      newCustomers: customersInside,
-      newCustomerCount: customersInside.length,
-      newTotalSales: totalSales,
-      newCentroid: calculateCentroid(newPath),
-      originalCustomerCount,
-      originalSales,
-      territory: originalTerritory,
-      originalPath: originalTerritory ? [...originalTerritory.path] : [] // Store copy of original path for revert
+    path.forEach(point => {
+      lat += point.lat;
+      lng += point.lng;
     });
 
-    // Only apply changes immediately if confirmation is disabled
-    if (!confirmEdits && onTerritoryUpdate) {
-      onTerritoryUpdate(territoryId, {
-        path: newPath,
-        customers: customersInside,
-        customerCount: customersInside.length,
-        totalSales: totalSales,
-        centroid: calculateCentroid(newPath)
+    return {
+      lat: lat / path.length,
+      lng: lng / path.length
+    };
+  }, []);
+  // Function to recalculate customers within a territory (store pending changes)
+  const recalculateCustomersInTerritory = useCallback(
+    (territoryId, newPath) => {
+      if (!customers) return;
+
+      // Find customers that are inside the new polygon
+      const customersInside = customers.filter(customer => isPointInPolygon(customer.location, newPath));
+
+      // Calculate total sales
+      const totalSales = customersInside.reduce((sum, customer) => sum + (customer.sales || 0), 0);
+
+      // Find the original territory for comparison
+      const originalTerritory = territories.find(t => t.id === territoryId);
+      const originalCustomerCount = originalTerritory ? originalTerritory.customerCount : 0;
+      const originalSales = originalTerritory ? originalTerritory.totalSales : 0;
+
+      // Always store pending changes, but don't show dialog automatically
+      setPendingEdit({
+        territoryId,
+        newPath,
+        newCustomers: customersInside,
+        newCustomerCount: customersInside.length,
+        newTotalSales: totalSales,
+        newCentroid: calculateCentroid(newPath),
+        originalCustomerCount,
+        originalSales,
+        territory: originalTerritory,
+        originalPath: originalTerritory ? [...originalTerritory.path] : [] // Store copy of original path for revert
       });
-    }
-  }, [customers, territories, isPointInPolygon, calculateCentroid, confirmEdits, onTerritoryUpdate]);
 
-  // Handle polygon edit events with better event management
-  const handlePolygonEdit = useCallback((territoryId) => {
-    return (polygon) => {
-      const newPath = [];
-      const pathArray = polygon.getPath();
-
-      for (let i = 0; i < pathArray.getLength(); i++) {
-        const point = pathArray.getAt(i);
-        newPath.push({
-          lat: point.lat(),
-          lng: point.lng()
+      // Only apply changes immediately if confirmation is disabled
+      if (!confirmEdits && onTerritoryUpdate) {
+        onTerritoryUpdate(territoryId, {
+          path: newPath,
+          customers: customersInside,
+          customerCount: customersInside.length,
+          totalSales: totalSales,
+          centroid: calculateCentroid(newPath)
         });
       }
+    },
+    [customers, territories, isPointInPolygon, calculateCentroid, confirmEdits, onTerritoryUpdate]
+  );
 
-      recalculateCustomersInTerritory(territoryId, newPath);
-    };
-  }, [recalculateCustomersInTerritory]);
+  // Handle polygon edit events with better event management
+  const handlePolygonEdit = useCallback(
+    territoryId => {
+      return polygon => {
+        const newPath = [];
+        const pathArray = polygon.getPath();
+
+        for (let i = 0; i < pathArray.getLength(); i++) {
+          const point = pathArray.getAt(i);
+          newPath.push({
+            lat: point.lat(),
+            lng: point.lng()
+          });
+        }
+
+        recalculateCustomersInTerritory(territoryId, newPath);
+      };
+    },
+    [recalculateCustomersInTerritory]
+  );
 
   // Setup event listeners for a polygon
-  const setupPolygonEventListeners = useCallback((polygon, territoryId) => {
-    if (!polygon) return;
+  const setupPolygonEventListeners = useCallback(
+    (polygon, territoryId) => {
+      if (!polygon) return;
 
-    // Clear any existing listeners to avoid duplicates
-    window.google.maps.event.clearInstanceListeners(polygon);
-    window.google.maps.event.clearInstanceListeners(polygon.getPath());
+      // Clear any existing listeners to avoid duplicates
+      window.google.maps.event.clearInstanceListeners(polygon);
+      window.google.maps.event.clearInstanceListeners(polygon.getPath());
 
-    // Add comprehensive event listeners for all types of polygon changes
-    const editHandler = () => handlePolygonEdit(territoryId)(polygon);
+      // Add comprehensive event listeners for all types of polygon changes
+      const editHandler = () => handlePolygonEdit(territoryId)(polygon);
 
-    // Listen for vertex drag/move events
-    window.google.maps.event.addListener(polygon.getPath(), 'set_at', editHandler);
+      // Listen for vertex drag/move events
+      window.google.maps.event.addListener(polygon.getPath(), 'set_at', editHandler);
 
-    // Listen for vertex insertion (when user clicks on an edge to add a point)
-    window.google.maps.event.addListener(polygon.getPath(), 'insert_at', editHandler);
+      // Listen for vertex insertion (when user clicks on an edge to add a point)
+      window.google.maps.event.addListener(polygon.getPath(), 'insert_at', editHandler);
 
-    // Listen for vertex removal (when user right-clicks on a vertex)
-    window.google.maps.event.addListener(polygon.getPath(), 'remove_at', editHandler);
+      // Listen for vertex removal (when user right-clicks on a vertex)
+      window.google.maps.event.addListener(polygon.getPath(), 'remove_at', editHandler);
 
-    // Listen for entire polygon drag
-    window.google.maps.event.addListener(polygon, 'dragend', editHandler);
+      // Listen for entire polygon drag
+      window.google.maps.event.addListener(polygon, 'dragend', editHandler);
 
-    // Optional: Listen for drag start for immediate feedback
-    window.google.maps.event.addListener(polygon, 'dragstart', () => {
-      console.log(`Started dragging territory ${territoryId}`);
-    });
-
-  }, [handlePolygonEdit]);
+      // Optional: Listen for drag start for immediate feedback
+      window.google.maps.event.addListener(polygon, 'dragstart', () => {
+        console.log(`Started dragging territory ${territoryId}`);
+      });
+    },
+    [handlePolygonEdit]
+  );
 
   // Effect to manage polygon event listeners when edit mode or active polygon changes
   useEffect(() => {
@@ -424,6 +472,106 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
       }
     };
   }, [drawingManager, newPolygon]);
+
+  // Comprehensive cleanup function for drawing state
+  const cleanupDrawingState = useCallback(() => {
+    console.log('Cleaning up drawing state');
+
+    // Clear any existing polygon
+    if (newPolygon) {
+      newPolygon.setMap(null);
+      setNewPolygon(null);
+    }
+
+    // Reset drawing manager
+    if (drawingManager && mapInstance) {
+      try {
+        drawingManager.setDrawingMode(null);
+
+        // Get all overlays on the map and remove any drawing overlays
+        const map = drawingManager.getMap();
+        if (map) {
+          // Remove all drawing overlays
+          google.maps.event.trigger(map, 'clear_overlays');
+        }
+      } catch (error) {
+        console.warn('Error during drawing cleanup:', error);
+      }
+    }
+
+    // Reset states
+    setDrawingMode(false);
+    setCreateDialogOpen(false);
+    setNewTerritoryName('');
+
+    console.log('Drawing state cleanup completed');
+  }, [newPolygon, drawingManager, mapInstance]);
+
+  // Force reinitialize drawing manager if needed
+  const reinitializeDrawingManager = useCallback(() => {
+    if (!mapInstance) return;
+
+    console.log('Reinitializing drawing manager');
+
+    // Remove old drawing manager
+    if (drawingManager) {
+      try {
+        drawingManager.setMap(null);
+        google.maps.event.clearInstanceListeners(drawingManager);
+      } catch (error) {
+        console.warn('Error clearing old drawing manager:', error);
+      }
+    }
+
+    // Create new drawing manager
+    const newDrawingManager = new window.google.maps.drawing.DrawingManager({
+      drawingMode: null,
+      drawingControl: false,
+      polygonOptions: {
+        fillColor: '#3182CE',
+        fillOpacity: 0.3,
+        strokeColor: '#3182CE',
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        clickable: true,
+        editable: true,
+        draggable: true
+      }
+    });
+
+    newDrawingManager.setMap(mapInstance);
+    setDrawingManager(newDrawingManager);
+
+    // Listen for polygon completion
+    window.google.maps.event.addListener(newDrawingManager, 'polygoncomplete', polygon => {
+      console.log('Polygon completed');
+
+      // Stop drawing mode immediately
+      newDrawingManager.setDrawingMode(null);
+      setDrawingMode(false);
+
+      // Store the new polygon
+      setNewPolygon(polygon);
+
+      // Open dialog to name the territory
+      setCreateDialogOpen(true);
+    });
+
+    // Listen for drawing mode changes to sync our state
+    window.google.maps.event.addListener(newDrawingManager, 'drawingmode_changed', () => {
+      const mode = newDrawingManager.getDrawingMode();
+      console.log('Drawing mode changed:', mode);
+
+      // Sync our state with the drawing manager's actual state
+      if (mode === null && drawingMode) {
+        setDrawingMode(false);
+      } else if (mode === window.google.maps.drawing.OverlayType.POLYGON && !drawingMode) {
+        setDrawingMode(true);
+      }
+    });
+
+    console.log('Drawing manager reinitialized');
+  }, [mapInstance, drawingManager, drawingMode]);
 
   // Handle confirmation of polygon edit
   const handleConfirmEdit = useCallback(() => {
@@ -478,18 +626,54 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
 
   // Handle drawing mode toggle
   const handleDrawingModeToggle = useCallback(() => {
-    if (!drawingManager) return;
+    if (!drawingManager || !mapInstance) {
+      console.warn('Drawing manager or map not initialized, attempting reinitialize');
+      reinitializeDrawingManager();
+      return;
+    }
+
+    console.log('Drawing mode toggle called:', {
+      currentDrawingMode: drawingMode,
+      newPolygonExists: !!newPolygon,
+      createDialogOpen: createDialogOpen
+    });
 
     if (drawingMode) {
       // Stop drawing
       drawingManager.setDrawingMode(null);
       setDrawingMode(false);
+      console.log('Drawing mode disabled');
     } else {
-      // Start drawing
-      drawingManager.setDrawingMode(window.google.maps.drawing.OverlayType.POLYGON);
-      setDrawingMode(true);
+      // Prevent starting new drawing if create dialog is open
+      if (createDialogOpen) {
+        console.warn('Cannot start drawing while create dialog is open');
+        return;
+      }
+
+      // Clear any existing new polygon before starting new drawing
+      if (newPolygon) {
+        console.log('Clearing existing polygon before new drawing');
+        newPolygon.setMap(null);
+        setNewPolygon(null);
+      }
+
+      // Ensure drawing manager is in a clean state
+      try {
+        drawingManager.setDrawingMode(null);
+
+        // Small delay to ensure the drawing manager is ready
+        setTimeout(() => {
+          // Start drawing
+          drawingManager.setDrawingMode(window.google.maps.drawing.OverlayType.POLYGON);
+          setDrawingMode(true);
+          console.log('Drawing mode enabled');
+        }, 50);
+      } catch (error) {
+        console.error('Error enabling drawing mode, reinitializing:', error);
+        reinitializeDrawingManager();
+      }
     }
-  }, [drawingManager, drawingMode]);
+  }, [drawingManager, drawingMode, newPolygon, createDialogOpen, mapInstance, reinitializeDrawingManager]);
 
   // Handle new territory creation
   const handleCreateTerritory = useCallback(() => {
@@ -507,9 +691,7 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
     }
 
     // Find customers inside the polygon
-    const customersInside = customers.filter(customer =>
-      isPointInPolygon(customer.location, path)
-    );
+    const customersInside = customers.filter(customer => isPointInPolygon(customer.location, path));
 
     // Calculate total sales
     const totalSales = customersInside.reduce((sum, customer) => sum + (customer.sales || 0), 0);
@@ -542,23 +724,36 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
     setNewTerritoryName('');
     setCreateDialogOpen(false);
 
+    // Use comprehensive cleanup
+    setTimeout(() => {
+      cleanupDrawingState();
+    }, 100);
+
     // Show success message
     setSaveSuccess(newId);
     setTimeout(() => setSaveSuccess(null), 3000);
-  }, [newPolygon, newTerritoryName, customers, territories, isPointInPolygon, calculateCentroid, onTerritoryCreate]);
+  }, [
+    newPolygon,
+    newTerritoryName,
+    customers,
+    territories,
+    isPointInPolygon,
+    calculateCentroid,
+    onTerritoryCreate,
+    drawingManager,
+    cleanupDrawingState
+  ]);
 
   // Handle cancel territory creation
   const handleCancelCreate = useCallback(() => {
-    if (newPolygon) {
-      newPolygon.setMap(null); // Remove the drawn polygon from map
-      setNewPolygon(null);
-    }
-    setNewTerritoryName('');
-    setCreateDialogOpen(false);
-  }, [newPolygon]);
+    // Use comprehensive cleanup
+    cleanupDrawingState();
+
+    console.log('Territory creation canceled');
+  }, [cleanupDrawingState]);
 
   // Handle territory deletion request
-  const handleDeleteTerritory = useCallback((territory) => {
+  const handleDeleteTerritory = useCallback(territory => {
     setTerritoryToDelete(territory);
     setDeleteDialogOpen(true);
   }, []);
@@ -589,7 +784,7 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
   }, []);
 
   // Handle export customers in territory as JSON
-  const handleExportTerritoryCustomers = useCallback((territory) => {
+  const handleExportTerritoryCustomers = useCallback(territory => {
     if (!territory || !territory.customers || territory.customers.length === 0) {
       console.warn('No customers to export in this territory');
       return;
@@ -633,20 +828,24 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
   if (loadError) {
     console.error('Google Maps API load error:', loadError);
     return (
-      <Box sx={{
-        height: '100%',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        p: { xs: 2, sm: 3 }
-      }}>
-        <Paper sx={{
-          p: { xs: 2, sm: 3 },
-          textAlign: 'center',
-          maxWidth: 500,
-          borderRadius: 3,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-        }}>
+      <Box
+        sx={{
+          height: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          p: { xs: 2, sm: 3 }
+        }}
+      >
+        <Paper
+          sx={{
+            p: { xs: 2, sm: 3 },
+            textAlign: 'center',
+            maxWidth: 500,
+            borderRadius: 3,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+          }}
+        >
           <Alert
             severity='error'
             sx={{
@@ -657,9 +856,13 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
           >
             Failed to load Google Maps
           </Alert>
-          <Typography variant='body2' color='text.secondary' sx={{
-            fontSize: { xs: '0.8rem', sm: '0.875rem' }
-          }}>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            sx={{
+              fontSize: { xs: '0.8rem', sm: '0.875rem' }
+            }}
+          >
             Please check your Google Maps API key and ensure it has the necessary permissions.
           </Typography>
         </Paper>
@@ -670,13 +873,15 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
   // Loading state
   if (!isLoaded) {
     return (
-      <Box sx={{
-        height: '100%',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        bgcolor: 'background.paper'
-      }}>
+      <Box
+        sx={{
+          height: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          bgcolor: 'background.paper'
+        }}
+      >
         <Fade in={true}>
           <Box sx={{ textAlign: 'center' }}>
             <CircularProgress
@@ -687,18 +892,25 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
                 mb: 2
               }}
             />
-            <Typography variant='h6' sx={{
-              mt: 2,
-              color: 'text.primary',
-              fontWeight: 500,
-              fontSize: { xs: '1rem', sm: '1.25rem' }
-            }}>
+            <Typography
+              variant='h6'
+              sx={{
+                mt: 2,
+                color: 'text.primary',
+                fontWeight: 500,
+                fontSize: { xs: '1rem', sm: '1.25rem' }
+              }}
+            >
               Loading Google Maps...
             </Typography>
-            <Typography variant='body2' color='text.secondary' sx={{
-              mt: 1,
-              fontSize: { xs: '0.8rem', sm: '0.875rem' }
-            }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{
+                mt: 1,
+                fontSize: { xs: '0.8rem', sm: '0.875rem' }
+              }}
+            >
               Please wait while we initialize the map
             </Typography>
           </Box>
@@ -708,13 +920,15 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
   }
 
   return (
-    <Box sx={{
-      height: '100%',
-      width: '100%',
-      position: 'relative',
-      borderRadius: 'inherit',
-      overflow: 'hidden'
-    }}>
+    <Box
+      sx={{
+        height: '100%',
+        width: '100%',
+        position: 'relative',
+        borderRadius: 'inherit',
+        overflow: 'hidden'
+      }}
+    >
       <GoogleMap
         ref={mapRef}
         mapContainerStyle={{ height: '100%', width: '100%' }}
@@ -768,7 +982,7 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
                     onClick={() => handlePolygonClick(territory)}
                     onMouseEnter={() => setHoveredPolygon(territory)}
                     onMouseLeave={() => setHoveredPolygon(null)}
-                    onLoad={(polygon) => {
+                    onLoad={polygon => {
                       // Store polygon reference for event management
                       setPolygonRefs(prev => {
                         const newMap = new Map(prev);
@@ -818,142 +1032,140 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
             }}
           >
             <Card>
-            <Box sx={{ p: 1 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                <Typography variant='h6' color='primary'>
-                  Territory {activePolygon.id}
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-                  {editMode && (
-                    <Chip
-                      label="EDITABLE"
-                      size="small"
-                      color="warning"
-                      variant="filled"
-                      sx={{ fontSize: '0.7rem' }}
-                    />
-                  )}
-                  <Tooltip title="Export Customers as JSON">
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={() => handleExportTerritoryCustomers(activePolygon)}
-                      disabled={!activePolygon.customers || activePolygon.customers.length === 0}
-                      sx={{
-                        width: 24,
-                        height: 24,
-                        '&:hover': {
-                          bgcolor: 'primary.light',
-                          color: 'white'
-                        },
-                        '&:disabled': {
-                          opacity: 0.5
-                        }
-                      }}
-                    >
-                      <Download fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete Territory">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleDeleteTerritory(activePolygon)}
-                      sx={{
-                        width: 24,
-                        height: 24,
-                        '&:hover': {
-                          bgcolor: 'error.light',
-                          color: 'white'
-                        }
-                      }}
-                    >
-                      <Delete fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+              <Box sx={{ p: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Typography variant='h6' color='primary'>
+                    Territory {activePolygon.id}
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                    {editMode && <Chip label='EDITABLE' size='small' color='warning' variant='filled' sx={{ fontSize: '0.7rem' }} />}
+                    <Tooltip title='Export Customers as JSON'>
+                      <IconButton
+                        size='small'
+                        color='primary'
+                        onClick={() => handleExportTerritoryCustomers(activePolygon)}
+                        disabled={!activePolygon.customers || activePolygon.customers.length === 0}
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          '&:hover': {
+                            bgcolor: 'primary.light',
+                            color: 'white'
+                          },
+                          '&:disabled': {
+                            opacity: 0.5
+                          }
+                        }}
+                      >
+                        <Download fontSize='small' />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title='Delete Territory'>
+                      <IconButton
+                        size='small'
+                        color='error'
+                        onClick={() => handleDeleteTerritory(activePolygon)}
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          '&:hover': {
+                            bgcolor: 'error.light',
+                            color: 'white'
+                          }
+                        }}
+                      >
+                        <Delete fontSize='small' />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </Box>
-              </Box>
 
-              {editMode && (
-                <Typography variant='caption' color='warning.main' sx={{ display: 'block', mb: 1 }}>
-                  Click and drag points to edit the territory boundary
-                </Typography>
-              )}
+                {editMode && (
+                  <Typography variant='caption' color='warning.main' sx={{ display: 'block', mb: 1 }}>
+                    Click and drag points to edit the territory boundary
+                  </Typography>
+                )}
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <People fontSize='small' color='primary' />
-                <Typography variant='body2'>{activePolygon.customerCount} customers</Typography>
-              </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <People fontSize='small' color='primary' />
+                  <Typography variant='body2'>{activePolygon.customerCount} customers</Typography>
+                </Box>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <LocationOn fontSize='small' color='secondary' />
-                <Typography variant='body2'>
-                  Center: {activePolygon.centroid.lat.toFixed(4)}, {activePolygon.centroid.lng.toFixed(4)}
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <Typography variant='body2' color='text.secondary'>
-                  Area: ~{polygonAreaToKm2(calculatePolygonArea(activePolygon.path))} km²
-                </Typography>
-              </Box>
-
-              <Typography variant='body2' color='text.secondary' gutterBottom>
-                Customers in this territory:
-              </Typography>
-
-              <Box sx={{ maxHeight: 150, overflowY: 'auto', mb: 2 }}>
-                {activePolygon.customers.map(customer => (
-                  <Chip
-                    key={customer.id}
-                    label={customer.name}
-                    size='small'
-                    variant='outlined'
-                    sx={{ mr: 0.5, mb: 0.5 }}
-                    onClick={() => handleMarkerClick(customer)}
-                  />
-                ))}
-              </Box>
-
-              {/* Export Section */}
-              {activePolygon.customers && activePolygon.customers.length > 0 && (
-                <Box sx={{
-                  borderTop: 1,
-                  borderColor: 'divider',
-                  pt: 1,
-                  mt: 1
-                }}>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<Download />}
-                    onClick={() => handleExportTerritoryCustomers(activePolygon)}
-                    fullWidth
-                    sx={{
-                      fontSize: '0.75rem',
-                      py: 0.5,
-                      borderColor: 'primary.main',
-                      color: 'primary.main',
-                      '&:hover': {
-                        bgcolor: 'primary.light',
-                        color: 'white',
-                        borderColor: 'primary.main'
-                      }
-                    }}
-                  >
-                    Export {activePolygon.customerCount} Customers
-                  </Button>
-                  <Typography variant='caption' color='text.secondary' sx={{
-                    display: 'block',
-                    mt: 0.5,
-                    textAlign: 'center',
-                    fontSize: '0.7rem'
-                  }}>
-                    Downloads JSON file for focused planning
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <LocationOn fontSize='small' color='secondary' />
+                  <Typography variant='body2'>
+                    Center: {activePolygon.centroid.lat.toFixed(4)}, {activePolygon.centroid.lng.toFixed(4)}
                   </Typography>
                 </Box>
-              )}
-            </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <Typography variant='body2' color='text.secondary'>
+                    Area: ~{polygonAreaToKm2(calculatePolygonArea(activePolygon.path))} km²
+                  </Typography>
+                </Box>
+
+                <Typography variant='body2' color='text.secondary' gutterBottom>
+                  Customers in this territory:
+                </Typography>
+
+                <Box sx={{ maxHeight: 150, overflowY: 'auto', mb: 2 }}>
+                  {activePolygon.customers.map(customer => (
+                    <Chip
+                      key={customer.id}
+                      label={customer.name}
+                      size='small'
+                      variant='outlined'
+                      sx={{ mr: 0.5, mb: 0.5 }}
+                      onClick={() => handleMarkerClick(customer)}
+                    />
+                  ))}
+                </Box>
+
+                {/* Export Section */}
+                {activePolygon.customers && activePolygon.customers.length > 0 && (
+                  <Box
+                    sx={{
+                      borderTop: 1,
+                      borderColor: 'divider',
+                      pt: 1,
+                      mt: 1
+                    }}
+                  >
+                    <Button
+                      variant='outlined'
+                      size='small'
+                      startIcon={<Download />}
+                      onClick={() => handleExportTerritoryCustomers(activePolygon)}
+                      fullWidth
+                      sx={{
+                        fontSize: '0.75rem',
+                        py: 0.5,
+                        borderColor: 'primary.main',
+                        color: 'primary.main',
+                        '&:hover': {
+                          bgcolor: 'primary.light',
+                          color: 'white',
+                          borderColor: 'primary.main'
+                        }
+                      }}
+                    >
+                      Export {activePolygon.customerCount} Customers
+                    </Button>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                      sx={{
+                        display: 'block',
+                        mt: 0.5,
+                        textAlign: 'center',
+                        fontSize: '0.7rem'
+                      }}
+                    >
+                      Downloads JSON file for focused planning
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
             </Card>
           </InfoWindowF>
         )}
@@ -968,24 +1180,23 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
             }}
           >
             <Card>
-
-            <Box sx={{ p: 1 }}>
-              <Typography variant='h6' gutterBottom>
-                {activeMarker.name}
-              </Typography>
-              <Typography variant='body2' color='text.secondary'>
-                ID: {activeMarker.id}
-              </Typography>
-              <Typography variant='body2' color='text.secondary'>
-                Name: {activeMarker.customer_name}
-              </Typography>
-              <Typography variant='body2' color='text.secondary'>
-                DNI: {activeMarker.document_number}
-              </Typography>
-              <Typography variant='body2' color='text.secondary'>
-                Location: {activeMarker.location.lat.toFixed(4)}, {activeMarker.location.lng.toFixed(4)}
-              </Typography>
-            </Box>
+              <Box sx={{ p: 1 }}>
+                <Typography variant='h6' gutterBottom>
+                  {activeMarker.name}
+                </Typography>
+                <Typography variant='body2' color='text.secondary'>
+                  ID: {activeMarker.id}
+                </Typography>
+                <Typography variant='body2' color='text.secondary'>
+                  Name: {activeMarker.customer_name}
+                </Typography>
+                <Typography variant='body2' color='text.secondary'>
+                  DNI: {activeMarker.document_number}
+                </Typography>
+                <Typography variant='body2' color='text.secondary'>
+                  Location: {activeMarker.location.lat.toFixed(4)}, {activeMarker.location.lng.toFixed(4)}
+                </Typography>
+              </Box>
             </Card>
           </InfoWindowF>
         )}
@@ -1014,15 +1225,17 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
       </GoogleMap>
 
       {/* Enhanced responsive map controls */}
-      <Box sx={{
-        position: 'absolute',
-        top: { xs: 60, sm: 80 },
-        left: { xs: 12, sm: 16 },
-        zIndex: 10,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 1
-      }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          top: { xs: 60, sm: 80 },
+          left: { xs: 12, sm: 16 },
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1
+        }}
+      >
         <Tooltip title='Fit all territories'>
           <IconButton
             onClick={fitBounds}
@@ -1043,9 +1256,10 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
         </Tooltip>
 
         {/* Draw New Territory Button */}
-        <Tooltip title={drawingMode ? "Cancel Drawing" : "Draw New Territory"}>
+        <Tooltip title={createDialogOpen ? 'Complete current territory first' : drawingMode ? 'Cancel Drawing' : 'Draw New Territory'}>
           <IconButton
             onClick={handleDrawingModeToggle}
+            disabled={createDialogOpen}
             sx={{
               bgcolor: drawingMode ? 'warning.main' : 'background.paper',
               color: drawingMode ? 'warning.contrastText' : 'text.primary',
@@ -1055,6 +1269,10 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
               '&:hover': {
                 bgcolor: drawingMode ? 'warning.dark' : 'action.hover',
                 transform: 'scale(1.05)'
+              },
+              '&:disabled': {
+                opacity: 0.5,
+                transform: 'none'
               },
               transition: 'all 0.2s ease-in-out'
             }}
@@ -1069,17 +1287,18 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
             <Tooltip
               title={
                 <Box>
-                  <Typography variant="subtitle2">Save Territory {pendingEdit.territoryId}</Typography>
-                  <Typography variant="caption">
-                    {pendingEdit.newCustomerCount} customers ({pendingEdit.newCustomerCount > pendingEdit.originalCustomerCount ? '+' : ''}{pendingEdit.newCustomerCount - pendingEdit.originalCustomerCount} change)
+                  <Typography variant='subtitle2'>Save Territory {pendingEdit.territoryId}</Typography>
+                  <Typography variant='caption'>
+                    {pendingEdit.newCustomerCount} customers ({pendingEdit.newCustomerCount > pendingEdit.originalCustomerCount ? '+' : ''}
+                    {pendingEdit.newCustomerCount - pendingEdit.originalCustomerCount} change)
                   </Typography>
                 </Box>
               }
-              placement="right"
+              placement='right'
             >
               <Fab
-                color="primary"
-                size="medium"
+                color='primary'
+                size='medium'
                 onClick={handleSavePolygonEdits}
                 sx={{
                   boxShadow: 4,
@@ -1117,102 +1336,118 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
       {/* Enhanced responsive map legend */}
       {territories && territories.length > 0 && (
         <Fade in={true} timeout={500}>
-          <Paper
+          {/* <Paper
             elevation={4}
             sx={{
               position: 'absolute',
-              top: { xs: 12, sm: 16 },
+              top: { xs: 60, sm: 80 },
               right: { xs: 12, sm: 16 },
               p: { xs: 1.5, sm: 2 },
               maxWidth: { xs: 250, sm: 320 },
               maxHeight: { xs: '50vh', sm: '60vh' },
               // bgcolor: 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(10px)',
-              borderRadius: 3,
-              overflowY: 'auto',
-              '&::-webkit-scrollbar': {
-                width: '6px',
-              },
-              '&::-webkit-scrollbar-track': {
-                bgcolor: 'grey.100',
-                borderRadius: '10px',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                bgcolor: 'grey.400',
-                borderRadius: '10px',
-                '&:hover': {
-                  bgcolor: 'grey.600',
-                },
-              },
+              backdropFilter: 'blur(10px)'
+              // borderRadius: 3,
+              // overflowY: 'auto',
+              // '&::-webkit-scrollbar': {
+              //   width: '6px'
+              // },
+              // '&::-webkit-scrollbar-track': {
+              //   bgcolor: 'grey.100',
+              //   borderRadius: '10px'
+              // },
+              // '&::-webkit-scrollbar-thumb': {
+              //   bgcolor: 'grey.400',
+              //   borderRadius: '10px',
+              //   '&:hover': {
+              //     bgcolor: 'grey.600'
+              //   }
+              // }
+            }}
+          > */}
+          <Accordion
+            sx={{
+              position: 'absolute',
+              top: { xs: 60, sm: 80 },
+              right: { xs: 12, sm: 16 },
+              p: { xs: 1.5, sm: 2 }
             }}
           >
-            <Typography variant='subtitle2' gutterBottom fontWeight='bold' sx={{
-              fontSize: { xs: '0.85rem', sm: '0.95rem' }
-            }}>
+            <AccordionSummary expandIcon={<ExpandMore />} aria-controls='territory-legend-content' id='territory-legend-header'>
               Territory Legend
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {territories.map((territory, index) => {
-                const colorIndex = index % territoryColors.length;
-                const color = territoryColors[colorIndex];
-                const hasEdit = pendingEdit && pendingEdit.territoryId === territory.id;
+            </AccordionSummary>
+            <AccordionDetails
+              sx={{
+                p: { xs: 1.5, sm: 2 },
+                maxWidth: { xs: 250, sm: 320 },
+                maxHeight: { xs: '50vh', sm: '60vh' },
+                overflowY: 'auto'
+              }}
+            >
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {territories.map((territory, index) => {
+                  const colorIndex = index % territoryColors.length;
+                  const color = territoryColors[colorIndex];
+                  const hasEdit = pendingEdit && pendingEdit.territoryId === territory.id;
 
-                return (
-                  <Box
-                    key={territory.id}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      p: 0.5,
-                      borderRadius: 1,
-                      cursor: 'pointer',
-                      '&:hover': { bgcolor: 'action.hover' },
-                      bgcolor: activePolygon?.id === territory.id ? 'action.selected' : 'transparent',
-                      border: hasEdit ? '2px solid orange' : 'none'
-                    }}
-                    onClick={() => handlePolygonClick(territory)}
-                  >
+                  return (
                     <Box
+                      key={territory.id}
                       sx={{
-                        width: 16,
-                        height: 16,
-                        bgcolor: color,
-                        borderRadius: '50%',
-                        border: '2px solid #fff',
-                        boxShadow: 1
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        p: 0.5,
+                        borderRadius: 1,
+                        cursor: 'pointer',
+                        '&:hover': { bgcolor: 'action.hover' },
+                        bgcolor: activePolygon?.id === territory.id ? 'action.selected' : 'transparent',
+                        border: hasEdit ? '2px solid orange' : 'none'
                       }}
-                    />
-                    <Typography variant='body2' flex={1}>
-                      Territory {territory.id}
-                      {hasEdit && (
-                        <Typography
-                          variant='caption'
-                          sx={{
-                            color: 'orange',
-                            ml: 1,
-                            fontWeight: 'bold'
-                          }}
-                        >
-                          (edited)
-                        </Typography>
-                      )}
-                    </Typography>
-                    <Chip
-                      label={hasEdit ? pendingEdit.newCustomerCount : territory.customerCount}
-                      size='small'
-                      variant='outlined'
-                      sx={{
-                        minWidth: 'auto',
-                        color: hasEdit ? 'orange' : 'inherit',
-                        borderColor: hasEdit ? 'orange' : 'inherit'
-                      }}
-                    />
-                  </Box>
-                );
-              })}
-            </Box>
-          </Paper>
+                      onClick={() => handlePolygonClick(territory)}
+                    >
+                      <Box
+                        sx={{
+                          width: 16,
+                          height: 16,
+                          bgcolor: color,
+                          borderRadius: '50%',
+                          border: '2px solid #fff',
+                          boxShadow: 1
+                        }}
+                      />
+                      <Typography variant='body2' flex={1}>
+                        Territory {territory.id}
+                        {hasEdit && (
+                          <Typography
+                            variant='caption'
+                            sx={{
+                              color: 'orange',
+                              ml: 1,
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            (edited)
+                          </Typography>
+                        )}
+                      </Typography>
+                      <Chip
+                        label={hasEdit ? pendingEdit.newCustomerCount : territory.customerCount}
+                        size='small'
+                        variant='outlined'
+                        sx={{
+                          minWidth: 'auto',
+                          color: hasEdit ? 'orange' : 'inherit',
+                          borderColor: hasEdit ? 'orange' : 'inherit'
+                        }}
+                      />
+                    </Box>
+                  );
+                })}
+              </Box>
+            </AccordionDetails>
+          </Accordion>
+          {/* </Paper> */}
         </Fade>
       )}
 
@@ -1247,6 +1482,19 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
               🎨 Drawing mode active - Click on map to draw territory
             </Typography>
           )}
+          {drawingMode && (
+            <Typography
+              variant='caption'
+              sx={{
+                display: 'block',
+                color: 'text.secondary',
+                fontSize: '0.7rem',
+                mt: 0.25
+              }}
+            >
+              If drawing doesn't work, click the + button again to reset
+            </Typography>
+          )}
           {pendingEdit && editMode && (
             <Typography
               variant='caption'
@@ -1277,64 +1525,66 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
       )}
 
       {/* Confirmation dialog for polygon edits */}
-      <Dialog
-        open={confirmDialogOpen}
-        onClose={handleCancelEdit}
-        aria-labelledby="confirm-dialog-title"
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle id="confirm-dialog-title">
-          Confirm Territory Changes
-        </DialogTitle>
+      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit} aria-labelledby='confirm-dialog-title' maxWidth='sm' fullWidth>
+        <DialogTitle id='confirm-dialog-title'>Confirm Territory Changes</DialogTitle>
         <DialogContent>
           {pendingEdit && (
             <Box>
-              <Typography variant="h6" gutterBottom color="primary">
+              <Typography variant='h6' gutterBottom color='primary'>
                 Territory {pendingEdit.territoryId} - Changes Summary
               </Typography>
 
               <Box sx={{ mb: 2 }}>
-                <Typography variant="body1" gutterBottom>
+                <Typography variant='body1' gutterBottom>
                   Are you sure you want to save these changes?
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                <Typography variant='body2' color='text.secondary' sx={{ fontStyle: 'italic' }}>
                   Edit mode will be disabled after saving changes.
                 </Typography>
               </Box>
 
               {/* Customer Count Changes */}
               <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1, mb: 2 }}>
-                <Typography variant="subtitle2" gutterBottom>
+                <Typography variant='subtitle2' gutterBottom>
                   📊 Customer Assignment Changes:
                 </Typography>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2">Previous customers:</Typography>
-                  <Typography variant="body2" fontWeight={500}>
+                  <Typography variant='body2'>Previous customers:</Typography>
+                  <Typography variant='body2' fontWeight={500}>
                     {pendingEdit.originalCustomerCount}
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2">New customers:</Typography>
+                  <Typography variant='body2'>New customers:</Typography>
                   <Typography
-                    variant="body2"
+                    variant='body2'
                     fontWeight={500}
-                    color={pendingEdit.newCustomerCount > pendingEdit.originalCustomerCount ? 'success.main' :
-                           pendingEdit.newCustomerCount < pendingEdit.originalCustomerCount ? 'warning.main' : 'text.primary'}
+                    color={
+                      pendingEdit.newCustomerCount > pendingEdit.originalCustomerCount
+                        ? 'success.main'
+                        : pendingEdit.newCustomerCount < pendingEdit.originalCustomerCount
+                        ? 'warning.main'
+                        : 'text.primary'
+                    }
                   >
                     {pendingEdit.newCustomerCount}
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2">Change:</Typography>
+                  <Typography variant='body2'>Change:</Typography>
                   <Typography
-                    variant="body2"
+                    variant='body2'
                     fontWeight={500}
-                    color={pendingEdit.newCustomerCount > pendingEdit.originalCustomerCount ? 'success.main' :
-                           pendingEdit.newCustomerCount < pendingEdit.originalCustomerCount ? 'warning.main' : 'text.primary'}
+                    color={
+                      pendingEdit.newCustomerCount > pendingEdit.originalCustomerCount
+                        ? 'success.main'
+                        : pendingEdit.newCustomerCount < pendingEdit.originalCustomerCount
+                        ? 'warning.main'
+                        : 'text.primary'
+                    }
                   >
                     {pendingEdit.newCustomerCount > pendingEdit.originalCustomerCount ? '+' : ''}
                     {pendingEdit.newCustomerCount - pendingEdit.originalCustomerCount}
@@ -1344,39 +1594,49 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
 
               {/* Sales Changes */}
               <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1 }}>
-                <Typography variant="subtitle2" gutterBottom>
+                <Typography variant='subtitle2' gutterBottom>
                   💰 Sales Impact:
                 </Typography>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2">Previous sales:</Typography>
-                  <Typography variant="body2" fontWeight={500}>
+                  <Typography variant='body2'>Previous sales:</Typography>
+                  <Typography variant='body2' fontWeight={500}>
                     ${pendingEdit.originalSales?.toLocaleString() || 0}
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2">New sales:</Typography>
+                  <Typography variant='body2'>New sales:</Typography>
                   <Typography
-                    variant="body2"
+                    variant='body2'
                     fontWeight={500}
-                    color={pendingEdit.newTotalSales > pendingEdit.originalSales ? 'success.main' :
-                           pendingEdit.newTotalSales < pendingEdit.originalSales ? 'warning.main' : 'text.primary'}
+                    color={
+                      pendingEdit.newTotalSales > pendingEdit.originalSales
+                        ? 'success.main'
+                        : pendingEdit.newTotalSales < pendingEdit.originalSales
+                        ? 'warning.main'
+                        : 'text.primary'
+                    }
                   >
                     ${pendingEdit.newTotalSales?.toLocaleString() || 0}
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2">Change:</Typography>
+                  <Typography variant='body2'>Change:</Typography>
                   <Typography
-                    variant="body2"
+                    variant='body2'
                     fontWeight={500}
-                    color={pendingEdit.newTotalSales > pendingEdit.originalSales ? 'success.main' :
-                           pendingEdit.newTotalSales < pendingEdit.originalSales ? 'warning.main' : 'text.primary'}
+                    color={
+                      pendingEdit.newTotalSales > pendingEdit.originalSales
+                        ? 'success.main'
+                        : pendingEdit.newTotalSales < pendingEdit.originalSales
+                        ? 'warning.main'
+                        : 'text.primary'
+                    }
                   >
-                    {pendingEdit.newTotalSales > pendingEdit.originalSales ? '+' : ''}
-                    ${((pendingEdit.newTotalSales || 0) - (pendingEdit.originalSales || 0)).toLocaleString()}
+                    {pendingEdit.newTotalSales > pendingEdit.originalSales ? '+' : ''}$
+                    {((pendingEdit.newTotalSales || 0) - (pendingEdit.originalSales || 0)).toLocaleString()}
                   </Typography>
                 </Box>
               </Box>
@@ -1384,79 +1644,77 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelEdit} color="inherit">
+          <Button onClick={handleCancelEdit} color='inherit'>
             Cancel Changes
           </Button>
-          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
+          <Button onClick={handleConfirmEdit} color='primary' variant='contained'>
             Save Changes
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Create New Territory Dialog */}
-      <Dialog
-        open={createDialogOpen}
-        onClose={handleCancelCreate}
-        aria-labelledby="create-dialog-title"
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle id="create-dialog-title">
-          Create New Territory
-        </DialogTitle>
+      <Dialog open={createDialogOpen} onClose={handleCancelCreate} aria-labelledby='create-dialog-title' maxWidth='sm' fullWidth>
+        <DialogTitle id='create-dialog-title'>Create New Territory</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1 }}>
-            <Typography variant="body1" gutterBottom>
+            <Typography variant='body1' gutterBottom>
               Enter a name for your new territory:
             </Typography>
 
             <TextField
               autoFocus
-              margin="dense"
-              label="Territory Name"
+              margin='dense'
+              label='Territory Name'
               fullWidth
-              variant="outlined"
+              variant='outlined'
               value={newTerritoryName}
-              onChange={(e) => setNewTerritoryName(e.target.value)}
-              placeholder="e.g., Downtown District, North Zone..."
+              onChange={e => setNewTerritoryName(e.target.value)}
+              placeholder='e.g., Downtown District, North Zone...'
               sx={{ mb: 2 }}
             />
 
             {newPolygon && (
               <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1 }}>
-                <Typography variant="subtitle2" gutterBottom>
+                <Typography variant='subtitle2' gutterBottom>
                   📊 Territory Preview:
                 </Typography>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2">Customers inside:</Typography>
-                  <Typography variant="body2" fontWeight={500}>
-                    {customers.filter(customer => {
-                      if (!newPolygon) return false;
-                      const path = [];
-                      const pathArray = newPolygon.getPath();
-                      for (let i = 0; i < pathArray.getLength(); i++) {
-                        const point = pathArray.getAt(i);
-                        path.push({ lat: point.lat(), lng: point.lng() });
-                      }
-                      return isPointInPolygon(customer.location, path);
-                    }).length}
+                  <Typography variant='body2'>Customers inside:</Typography>
+                  <Typography variant='body2' fontWeight={500}>
+                    {
+                      customers.filter(customer => {
+                        if (!newPolygon) return false;
+                        const path = [];
+                        const pathArray = newPolygon.getPath();
+                        for (let i = 0; i < pathArray.getLength(); i++) {
+                          const point = pathArray.getAt(i);
+                          path.push({ lat: point.lat(), lng: point.lng() });
+                        }
+                        return isPointInPolygon(customer.location, path);
+                      }).length
+                    }
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2">Total sales:</Typography>
-                  <Typography variant="body2" fontWeight={500}>
-                    ${customers.filter(customer => {
-                      if (!newPolygon) return false;
-                      const path = [];
-                      const pathArray = newPolygon.getPath();
-                      for (let i = 0; i < pathArray.getLength(); i++) {
-                        const point = pathArray.getAt(i);
-                        path.push({ lat: point.lat(), lng: point.lng() });
-                      }
-                      return isPointInPolygon(customer.location, path);
-                    }).reduce((sum, customer) => sum + (customer.sales || 0), 0).toLocaleString()}
+                  <Typography variant='body2'>Total sales:</Typography>
+                  <Typography variant='body2' fontWeight={500}>
+                    $
+                    {customers
+                      .filter(customer => {
+                        if (!newPolygon) return false;
+                        const path = [];
+                        const pathArray = newPolygon.getPath();
+                        for (let i = 0; i < pathArray.getLength(); i++) {
+                          const point = pathArray.getAt(i);
+                          path.push({ lat: point.lat(), lng: point.lng() });
+                        }
+                        return isPointInPolygon(customer.location, path);
+                      })
+                      .reduce((sum, customer) => sum + (customer.sales || 0), 0)
+                      .toLocaleString()}
                   </Typography>
                 </Box>
               </Box>
@@ -1464,75 +1722,64 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelCreate} color="inherit">
+          <Button onClick={handleCancelCreate} color='inherit'>
             Cancel
           </Button>
-          <Button
-            onClick={handleCreateTerritory}
-            color="primary"
-            variant="contained"
-            disabled={!newTerritoryName.trim()}
-          >
+          <Button onClick={handleCreateTerritory} color='primary' variant='contained' disabled={!newTerritoryName.trim()}>
             Create Territory
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Delete Territory Confirmation Dialog */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={handleCancelDelete}
-        aria-labelledby="delete-dialog-title"
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle id="delete-dialog-title" sx={{ color: 'error.main' }}>
+      <Dialog open={deleteDialogOpen} onClose={handleCancelDelete} aria-labelledby='delete-dialog-title' maxWidth='sm' fullWidth>
+        <DialogTitle id='delete-dialog-title' sx={{ color: 'error.main' }}>
           Delete Territory
         </DialogTitle>
         <DialogContent>
           {territoryToDelete && (
             <Box>
-              <Typography variant="h6" gutterBottom color="error">
+              <Typography variant='h6' gutterBottom color='error'>
                 Are you sure you want to delete Territory {territoryToDelete.id}?
               </Typography>
 
-              <Typography variant="body1" gutterBottom sx={{ mb: 2 }}>
+              <Typography variant='body1' gutterBottom sx={{ mb: 2 }}>
                 This action cannot be undone. The territory and all its data will be permanently removed.
               </Typography>
 
               {/* Territory Information */}
               <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1, mb: 2 }}>
-                <Typography variant="subtitle2" gutterBottom>
+                <Typography variant='subtitle2' gutterBottom>
                   📊 Territory Details:
                 </Typography>
 
                 {territoryToDelete.name && (
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2">Name:</Typography>
-                    <Typography variant="body2" fontWeight={500}>
+                    <Typography variant='body2'>Name:</Typography>
+                    <Typography variant='body2' fontWeight={500}>
                       {territoryToDelete.name}
                     </Typography>
                   </Box>
                 )}
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2">Customers:</Typography>
-                  <Typography variant="body2" fontWeight={500}>
+                  <Typography variant='body2'>Customers:</Typography>
+                  <Typography variant='body2' fontWeight={500}>
                     {territoryToDelete.customerCount}
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2">Total Sales:</Typography>
-                  <Typography variant="body2" fontWeight={500}>
+                  <Typography variant='body2'>Total Sales:</Typography>
+                  <Typography variant='body2' fontWeight={500}>
                     ${territoryToDelete.totalSales?.toLocaleString() || 0}
                   </Typography>
                 </Box>
 
                 {territoryToDelete.isManuallyCreated && (
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2">Type:</Typography>
-                    <Typography variant="body2" fontWeight={500} color="primary">
+                    <Typography variant='body2'>Type:</Typography>
+                    <Typography variant='body2' fontWeight={500} color='primary'>
                       Manually Created
                     </Typography>
                   </Box>
@@ -1540,16 +1787,16 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
               </Box>
 
               <Box sx={{ bgcolor: 'error.50', p: 2, borderRadius: 1, border: '1px solid', borderColor: 'error.200' }}>
-                <Typography variant="subtitle2" gutterBottom color="error.main">
+                <Typography variant='subtitle2' gutterBottom color='error.main'>
                   ⚠️ Impact of Deletion:
                 </Typography>
-                <Typography variant="body2" color="error.dark">
+                <Typography variant='body2' color='error.dark'>
                   • {territoryToDelete.customerCount} customers will become unassigned
                 </Typography>
-                <Typography variant="body2" color="error.dark">
+                <Typography variant='body2' color='error.dark'>
                   • Territory boundaries and data will be lost permanently
                 </Typography>
-                <Typography variant="body2" color="error.dark">
+                <Typography variant='body2' color='error.dark'>
                   • This action cannot be undone
                 </Typography>
               </Box>
@@ -1557,15 +1804,10 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelDelete} color="inherit">
+          <Button onClick={handleCancelDelete} color='inherit'>
             Cancel
           </Button>
-          <Button
-            onClick={handleConfirmDelete}
-            color="error"
-            variant="contained"
-            startIcon={<Delete />}
-          >
+          <Button onClick={handleConfirmDelete} color='error' variant='contained' startIcon={<Delete />}>
             Delete Territory
           </Button>
         </DialogActions>
