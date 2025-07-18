@@ -1,16 +1,21 @@
-import { LocationOn, People, ZoomOutMap } from '@mui/icons-material';
-import { Alert, Box, Card, Chip, CircularProgress, Fade, IconButton, Paper, Tooltip, Typography } from '@mui/material';
+import { LocationOn, People, Save, ZoomOutMap } from '@mui/icons-material';
+import { Alert, Box, Button, Card, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Fab, Fade, IconButton, Paper, Tooltip, Typography } from '@mui/material';
 import { GoogleMap, InfoWindowF, MarkerF, PolygonF, useJsApiLoader } from '@react-google-maps/api';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { settings } from '../config';
 
 const LIBRARIES = ['geometry', 'places'];
 
-const MapContainer = ({ customers, territories }) => {
+const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = false, confirmEdits = true }) => {
   const [activePolygon, setActivePolygon] = useState(null);
   const [activeMarker, setActiveMarker] = useState(null);
   const [hoveredPolygon, setHoveredPolygon] = useState(null);
   const [mapInstance, setMapInstance] = useState(null);
+  const [editingTerritory, setEditingTerritory] = useState(null);
+  const [pendingEdit, setPendingEdit] = useState(null); // Stores pending polygon changes
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [polygonRefs, setPolygonRefs] = useState(new Map()); // Store polygon references
+  const [saveSuccess, setSaveSuccess] = useState(null); // Show success message after save
   const mapRef = useRef(null);
 
   const { isLoaded, loadError } = useJsApiLoader({
@@ -224,6 +229,202 @@ const MapContainer = ({ customers, territories }) => {
     return path && Array.isArray(path) && path.length >= 3 && path.every(point => point.lat !== undefined && point.lng !== undefined);
   }, []);
 
+  // Function to check if a point is inside a polygon using ray casting algorithm
+  const isPointInPolygon = useCallback((point, polygon) => {
+    const x = point.lat;
+    const y = point.lng;
+    let inside = false;
+
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i].lat;
+      const yi = polygon[i].lng;
+      const xj = polygon[j].lat;
+      const yj = polygon[j].lng;
+
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+        inside = !inside;
+      }
+    }
+    return inside;
+  }, []);
+
+    // Function to calculate polygon centroid
+    const calculateCentroid = useCallback((path) => {
+      if (!path || path.length === 0) return { lat: 0, lng: 0 };
+
+      let lat = 0;
+      let lng = 0;
+
+      path.forEach(point => {
+        lat += point.lat;
+        lng += point.lng;
+      });
+
+      return {
+        lat: lat / path.length,
+        lng: lng / path.length
+      };
+    }, []);
+  // Function to recalculate customers within a territory (store pending changes)
+  const recalculateCustomersInTerritory = useCallback((territoryId, newPath) => {
+    if (!customers) return;
+
+    // Find customers that are inside the new polygon
+    const customersInside = customers.filter(customer =>
+      isPointInPolygon(customer.location, newPath)
+    );
+
+    // Calculate total sales
+    const totalSales = customersInside.reduce((sum, customer) => sum + (customer.sales || 0), 0);
+
+    // Find the original territory for comparison
+    const originalTerritory = territories.find(t => t.id === territoryId);
+    const originalCustomerCount = originalTerritory ? originalTerritory.customerCount : 0;
+    const originalSales = originalTerritory ? originalTerritory.totalSales : 0;
+
+    // Always store pending changes, but don't show dialog automatically
+    setPendingEdit({
+      territoryId,
+      newPath,
+      newCustomers: customersInside,
+      newCustomerCount: customersInside.length,
+      newTotalSales: totalSales,
+      newCentroid: calculateCentroid(newPath),
+      originalCustomerCount,
+      originalSales,
+      territory: originalTerritory,
+      originalPath: originalTerritory ? [...originalTerritory.path] : [] // Store copy of original path for revert
+    });
+
+    // Only apply changes immediately if confirmation is disabled
+    if (!confirmEdits && onTerritoryUpdate) {
+      onTerritoryUpdate(territoryId, {
+        path: newPath,
+        customers: customersInside,
+        customerCount: customersInside.length,
+        totalSales: totalSales,
+        centroid: calculateCentroid(newPath)
+      });
+    }
+  }, [customers, territories, isPointInPolygon, calculateCentroid, confirmEdits, onTerritoryUpdate]);
+
+  // Handle polygon edit events with better event management
+  const handlePolygonEdit = useCallback((territoryId) => {
+    return (polygon) => {
+      const newPath = [];
+      const pathArray = polygon.getPath();
+
+      for (let i = 0; i < pathArray.getLength(); i++) {
+        const point = pathArray.getAt(i);
+        newPath.push({
+          lat: point.lat(),
+          lng: point.lng()
+        });
+      }
+
+      recalculateCustomersInTerritory(territoryId, newPath);
+    };
+  }, [recalculateCustomersInTerritory]);
+
+  // Setup event listeners for a polygon
+  const setupPolygonEventListeners = useCallback((polygon, territoryId) => {
+    if (!polygon) return;
+
+    // Clear any existing listeners to avoid duplicates
+    window.google.maps.event.clearInstanceListeners(polygon);
+    window.google.maps.event.clearInstanceListeners(polygon.getPath());
+
+    // Add comprehensive event listeners for all types of polygon changes
+    const editHandler = () => handlePolygonEdit(territoryId)(polygon);
+
+    // Listen for vertex drag/move events
+    window.google.maps.event.addListener(polygon.getPath(), 'set_at', editHandler);
+
+    // Listen for vertex insertion (when user clicks on an edge to add a point)
+    window.google.maps.event.addListener(polygon.getPath(), 'insert_at', editHandler);
+
+    // Listen for vertex removal (when user right-clicks on a vertex)
+    window.google.maps.event.addListener(polygon.getPath(), 'remove_at', editHandler);
+
+    // Listen for entire polygon drag
+    window.google.maps.event.addListener(polygon, 'dragend', editHandler);
+
+    // Optional: Listen for drag start for immediate feedback
+    window.google.maps.event.addListener(polygon, 'dragstart', () => {
+      console.log(`Started dragging territory ${territoryId}`);
+    });
+
+  }, [handlePolygonEdit]);
+
+  // Effect to manage polygon event listeners when edit mode or active polygon changes
+  useEffect(() => {
+    if (editMode && activePolygon) {
+      const polygon = polygonRefs.get(activePolygon.id);
+      if (polygon) {
+        setupPolygonEventListeners(polygon, activePolygon.id);
+      }
+    }
+  }, [editMode, activePolygon, polygonRefs, setupPolygonEventListeners]);
+
+  // Effect to clear pending edits when edit mode is disabled
+  useEffect(() => {
+    if (!editMode && pendingEdit) {
+      setPendingEdit(null);
+      setConfirmDialogOpen(false);
+    }
+  }, [editMode, pendingEdit]);
+
+  // Handle confirmation of polygon edit
+  const handleConfirmEdit = useCallback(() => {
+    if (pendingEdit && onTerritoryUpdate) {
+      // Apply the changes
+      onTerritoryUpdate(pendingEdit.territoryId, {
+        path: pendingEdit.newPath,
+        customers: pendingEdit.newCustomers,
+        customerCount: pendingEdit.newCustomerCount,
+        totalSales: pendingEdit.newTotalSales,
+        centroid: pendingEdit.newCentroid
+      });
+
+      // Show success message briefly
+      setSaveSuccess(pendingEdit.territoryId);
+      setTimeout(() => setSaveSuccess(null), 3000);
+    }
+
+    // Clean up
+    setPendingEdit(null);
+    setConfirmDialogOpen(false);
+  }, [pendingEdit, onTerritoryUpdate]);
+
+  // Handle save polygon edits button click
+  const handleSavePolygonEdits = useCallback(() => {
+    if (pendingEdit && confirmEdits) {
+      setConfirmDialogOpen(true);
+    } else if (pendingEdit && !confirmEdits) {
+      // If confirmation is disabled, apply changes directly
+      handleConfirmEdit();
+    }
+  }, [pendingEdit, confirmEdits, handleConfirmEdit]);
+
+  // Handle cancellation of polygon edit
+  const handleCancelEdit = useCallback(() => {
+    // Revert the polygon to its original state if we have a pending edit
+    if (pendingEdit && pendingEdit.originalPath) {
+      const polygon = polygonRefs.get(pendingEdit.territoryId);
+      if (polygon && pendingEdit.originalPath.length > 0) {
+        // Restore original path
+        const path = new window.google.maps.MVCArray();
+        pendingEdit.originalPath.forEach(point => {
+          path.push(new window.google.maps.LatLng(point.lat, point.lng));
+        });
+        polygon.setPath(path);
+      }
+    }
+
+    setPendingEdit(null);
+    setConfirmDialogOpen(false);
+  }, [pendingEdit, polygonRefs]);
+
   // Error handling
   if (loadError) {
     console.error('Google Maps API load error:', loadError);
@@ -363,6 +564,27 @@ const MapContainer = ({ customers, territories }) => {
                     onClick={() => handlePolygonClick(territory)}
                     onMouseEnter={() => setHoveredPolygon(territory)}
                     onMouseLeave={() => setHoveredPolygon(null)}
+                    onLoad={(polygon) => {
+                      // Store polygon reference for event management
+                      setPolygonRefs(prev => {
+                        const newMap = new Map(prev);
+                        newMap.set(territory.id, polygon);
+                        return newMap;
+                      });
+
+                      // If this polygon is active and we're in edit mode, set up listeners immediately
+                      if (editMode && isActive) {
+                        setupPolygonEventListeners(polygon, territory.id);
+                      }
+                    }}
+                    onUnmount={() => {
+                      // Clean up polygon reference when component unmounts
+                      setPolygonRefs(prev => {
+                        const newMap = new Map(prev);
+                        newMap.delete(territory.id);
+                        return newMap;
+                      });
+                    }}
                     options={{
                       fillColor: color,
                       fillOpacity: isActive ? 0.35 : isHovered ? 0.25 : 0.15,
@@ -370,8 +592,8 @@ const MapContainer = ({ customers, territories }) => {
                       strokeOpacity: isActive ? 1.0 : isHovered ? 0.9 : 0.8,
                       strokeWeight: isActive ? 3 : isHovered ? 2.5 : 2,
                       clickable: true,
-                      draggable: false,
-                      editable: false,
+                      draggable: editMode && isActive,
+                      editable: editMode && isActive,
                       geodesic: false,
                       zIndex: isActive ? 3 : isHovered ? 2 : 1
                     }}
@@ -393,9 +615,26 @@ const MapContainer = ({ customers, territories }) => {
           >
             <Card>
             <Box sx={{ p: 1 }}>
-              <Typography variant='h6' gutterBottom color='primary'>
-                Territory {activePolygon.id}
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant='h6' color='primary'>
+                  Territory {activePolygon.id}
+                </Typography>
+                {editMode && (
+                  <Chip
+                    label="EDITABLE"
+                    size="small"
+                    color="warning"
+                    variant="filled"
+                    sx={{ fontSize: '0.7rem' }}
+                  />
+                )}
+              </Box>
+
+              {editMode && (
+                <Typography variant='caption' color='warning.main' sx={{ display: 'block', mb: 1 }}>
+                  Click and drag points to edit the territory boundary
+                </Typography>
+              )}
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <People fontSize='small' color='primary' />
@@ -494,9 +733,12 @@ const MapContainer = ({ customers, territories }) => {
       {/* Enhanced responsive map controls */}
       <Box sx={{
         position: 'absolute',
-        top: { xs: 12, sm: 16 },
+        top: { xs: 60, sm: 80 },
         left: { xs: 12, sm: 16 },
-        zIndex: 10
+        zIndex: 10,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1
       }}>
         <Tooltip title='Fit all territories'>
           <IconButton
@@ -516,6 +758,56 @@ const MapContainer = ({ customers, territories }) => {
             <ZoomOutMap fontSize={window.innerWidth < 600 ? 'small' : 'medium'} />
           </IconButton>
         </Tooltip>
+
+        {/* Save Polygon Edits Button - Only show when there are pending edits */}
+        {pendingEdit && editMode && (
+          <Fade in={true} timeout={300}>
+            <Tooltip
+              title={
+                <Box>
+                  <Typography variant="subtitle2">Save Territory {pendingEdit.territoryId}</Typography>
+                  <Typography variant="caption">
+                    {pendingEdit.newCustomerCount} customers ({pendingEdit.newCustomerCount > pendingEdit.originalCustomerCount ? '+' : ''}{pendingEdit.newCustomerCount - pendingEdit.originalCustomerCount} change)
+                  </Typography>
+                </Box>
+              }
+              placement="right"
+            >
+              <Fab
+                color="primary"
+                size="medium"
+                onClick={handleSavePolygonEdits}
+                sx={{
+                  boxShadow: 4,
+                  animation: 'pulse 2s infinite',
+                  '@keyframes pulse': {
+                    '0%': {
+                      transform: 'scale(1)',
+                      boxShadow: '0 0 0 0 rgba(25, 118, 210, 0.7)'
+                    },
+                    '70%': {
+                      transform: 'scale(1.05)',
+                      boxShadow: '0 0 0 10px rgba(25, 118, 210, 0)'
+                    },
+                    '100%': {
+                      transform: 'scale(1)',
+                      boxShadow: '0 0 0 0 rgba(25, 118, 210, 0)'
+                    }
+                  },
+                  '&:hover': {
+                    transform: 'scale(1.1)',
+                    boxShadow: 6,
+                    animation: 'none'
+                  },
+                  transition: 'all 0.2s ease-in-out',
+                  bgcolor: 'primary.main'
+                }}
+              >
+                <Save />
+              </Fab>
+            </Tooltip>
+          </Fade>
+        )}
       </Box>
 
       {/* Enhanced responsive map legend */}
@@ -559,6 +851,7 @@ const MapContainer = ({ customers, territories }) => {
               {territories.map((territory, index) => {
                 const colorIndex = index % territoryColors.length;
                 const color = territoryColors[colorIndex];
+                const hasEdit = pendingEdit && pendingEdit.territoryId === territory.id;
 
                 return (
                   <Box
@@ -571,7 +864,8 @@ const MapContainer = ({ customers, territories }) => {
                       borderRadius: 1,
                       cursor: 'pointer',
                       '&:hover': { bgcolor: 'action.hover' },
-                      bgcolor: activePolygon?.id === territory.id ? 'action.selected' : 'transparent'
+                      bgcolor: activePolygon?.id === territory.id ? 'action.selected' : 'transparent',
+                      border: hasEdit ? '2px solid orange' : 'none'
                     }}
                     onClick={() => handlePolygonClick(territory)}
                   >
@@ -587,8 +881,29 @@ const MapContainer = ({ customers, territories }) => {
                     />
                     <Typography variant='body2' flex={1}>
                       Territory {territory.id}
+                      {hasEdit && (
+                        <Typography
+                          variant='caption'
+                          sx={{
+                            color: 'orange',
+                            ml: 1,
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          (edited)
+                        </Typography>
+                      )}
                     </Typography>
-                    <Chip label={territory.customerCount} size='small' variant='outlined' sx={{ minWidth: 'auto' }} />
+                    <Chip
+                      label={hasEdit ? pendingEdit.newCustomerCount : territory.customerCount}
+                      size='small'
+                      variant='outlined'
+                      sx={{
+                        minWidth: 'auto',
+                        color: hasEdit ? 'orange' : 'inherit',
+                        borderColor: hasEdit ? 'orange' : 'inherit'
+                      }}
+                    />
                   </Box>
                 );
               })}
@@ -615,8 +930,151 @@ const MapContainer = ({ customers, territories }) => {
             Total Customers: {customers.length} | Territories: {territories?.length || 0} | Avg per Territory:{' '}
             {territories?.length ? Math.round(customers.length / territories.length) : 0}
           </Typography>
+          {pendingEdit && editMode && (
+            <Typography
+              variant='caption'
+              sx={{
+                display: 'block',
+                color: 'warning.main',
+                fontWeight: 'bold',
+                mt: 0.5
+              }}
+            >
+              ⚠️ Territory {pendingEdit.territoryId} has unsaved changes
+            </Typography>
+          )}
+          {saveSuccess && (
+            <Typography
+              variant='caption'
+              sx={{
+                display: 'block',
+                color: 'success.main',
+                fontWeight: 'bold',
+                mt: 0.5
+              }}
+            >
+              ✅ Territory {saveSuccess} saved successfully - Edit mode disabled
+            </Typography>
+          )}
         </Paper>
       )}
+
+      {/* Confirmation dialog for polygon edits */}
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={handleCancelEdit}
+        aria-labelledby="confirm-dialog-title"
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle id="confirm-dialog-title">
+          Confirm Territory Changes
+        </DialogTitle>
+        <DialogContent>
+          {pendingEdit && (
+            <Box>
+              <Typography variant="h6" gutterBottom color="primary">
+                Territory {pendingEdit.territoryId} - Changes Summary
+              </Typography>
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body1" gutterBottom>
+                  Are you sure you want to save these changes?
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                  Edit mode will be disabled after saving changes.
+                </Typography>
+              </Box>
+
+              {/* Customer Count Changes */}
+              <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1, mb: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  📊 Customer Assignment Changes:
+                </Typography>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2">Previous customers:</Typography>
+                  <Typography variant="body2" fontWeight={500}>
+                    {pendingEdit.originalCustomerCount}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2">New customers:</Typography>
+                  <Typography
+                    variant="body2"
+                    fontWeight={500}
+                    color={pendingEdit.newCustomerCount > pendingEdit.originalCustomerCount ? 'success.main' :
+                           pendingEdit.newCustomerCount < pendingEdit.originalCustomerCount ? 'warning.main' : 'text.primary'}
+                  >
+                    {pendingEdit.newCustomerCount}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2">Change:</Typography>
+                  <Typography
+                    variant="body2"
+                    fontWeight={500}
+                    color={pendingEdit.newCustomerCount > pendingEdit.originalCustomerCount ? 'success.main' :
+                           pendingEdit.newCustomerCount < pendingEdit.originalCustomerCount ? 'warning.main' : 'text.primary'}
+                  >
+                    {pendingEdit.newCustomerCount > pendingEdit.originalCustomerCount ? '+' : ''}
+                    {pendingEdit.newCustomerCount - pendingEdit.originalCustomerCount}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Sales Changes */}
+              <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  💰 Sales Impact:
+                </Typography>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2">Previous sales:</Typography>
+                  <Typography variant="body2" fontWeight={500}>
+                    ${pendingEdit.originalSales?.toLocaleString() || 0}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2">New sales:</Typography>
+                  <Typography
+                    variant="body2"
+                    fontWeight={500}
+                    color={pendingEdit.newTotalSales > pendingEdit.originalSales ? 'success.main' :
+                           pendingEdit.newTotalSales < pendingEdit.originalSales ? 'warning.main' : 'text.primary'}
+                  >
+                    ${pendingEdit.newTotalSales?.toLocaleString() || 0}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2">Change:</Typography>
+                  <Typography
+                    variant="body2"
+                    fontWeight={500}
+                    color={pendingEdit.newTotalSales > pendingEdit.originalSales ? 'success.main' :
+                           pendingEdit.newTotalSales < pendingEdit.originalSales ? 'warning.main' : 'text.primary'}
+                  >
+                    {pendingEdit.newTotalSales > pendingEdit.originalSales ? '+' : ''}
+                    ${((pendingEdit.newTotalSales || 0) - (pendingEdit.originalSales || 0)).toLocaleString()}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEdit} color="inherit">
+            Cancel Changes
+          </Button>
+          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

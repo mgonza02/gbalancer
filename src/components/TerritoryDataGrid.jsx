@@ -185,9 +185,22 @@ export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate,
   const columns = [
     { field: 'id', headerName: 'ID', width: 60 },
     {
+      field: 'lastModified',
+      headerName: 'Status',
+      width: 70,
+      renderCell: (params) => {
+        const isRecent = params.value && new Date(params.value) > new Date(Date.now() - 5 * 60 * 1000); // Modified in last 5 minutes
+        return isRecent ? (
+          <Tooltip title="Recently edited">
+            <Chip label="EDIT" size="small" color="warning" variant="outlined" sx={{ fontSize: '0.6rem' }} />
+          </Tooltip>
+        ) : null;
+      }
+    },
+    {
       field: 'code',
       headerName: 'Code',
-      width: 80,
+      width: 70,
       editable: true,
       renderCell: (params) => (
         <Typography variant="body2" fontWeight={500}>
@@ -198,7 +211,7 @@ export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate,
     {
       field: 'name',
       headerName: 'Name',
-      width: 140,
+      width: 120,
       editable: true,
       renderCell: (params) => (
         <Typography variant="body2">

@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, TableChart } from '@mui/icons-material';
+import { ChevronLeft, ChevronRight, Edit, EditOff, TableChart } from '@mui/icons-material';
 import { Box, Grid, IconButton, Paper, Tooltip } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -11,10 +11,10 @@ import TerritoryDataGrid from '../components/TerritoryDataGrid';
 import { defaultBalancerConfig } from '../config';
 import { handleMakeCustomers } from '../data/mockCustomers';
 import {
-  hasCustomerData,
-  loadCustomerData,
-  normalizeCustomerData,
-  saveCustomerData
+    hasCustomerData,
+    loadCustomerData,
+    normalizeCustomerData,
+    saveCustomerData
 } from '../services/customerDataService';
 import TerritoryDataService from '../services/territoryDataService';
 import { generateTerritories } from '../services/territoryService';
@@ -31,6 +31,7 @@ const Dashboard = () => {
   const [showDataGrid, setShowDataGrid] = useState(false); // Controls DataGrid panel visibility
   const [showTerritories, setShowTerritories] = useState(true); // Controls territory visibility on map
   const [selectedTerritories, setSelectedTerritories] = useState([]); // Selected territory IDs
+  const [editMode, setEditMode] = useState(false); // Controls polygon editing mode
 
   // Initialize customer data on component mount
   useEffect(() => {
@@ -159,6 +160,18 @@ const Dashboard = () => {
     );
   };
 
+  // Handle territory polygon updates from map editing
+  const handleTerritoryPolygonUpdate = (territoryId, updates) => {
+    setTerritories(prev => prev.map(territory =>
+      territory.id === territoryId
+        ? { ...territory, ...updates, lastModified: new Date().toISOString() }
+        : territory
+    ));
+
+    // Auto-disable edit mode after successful save to provide clear feedback
+    setEditMode(false);
+  };
+
   // Handle save territories from DataGrid
   const handleSaveTerritories = (updatedTerritories) => {
     setTerritories(updatedTerritories);
@@ -248,6 +261,26 @@ const Dashboard = () => {
             display: 'flex',
             gap: 1
           }}>
+            <Tooltip title={editMode ? "Exit Edit Mode" : "Edit Territories"}>
+              <IconButton
+                onClick={() => setEditMode(!editMode)}
+                disabled={territories.length === 0}
+                sx={{
+                  bgcolor: editMode ? 'warning.main' : 'background.paper',
+                  color: editMode ? 'warning.contrastText' : 'text.primary',
+                  boxShadow: 2,
+                  '&:hover': {
+                    bgcolor: editMode ? 'warning.dark' : 'grey.100',
+                  },
+                  '&:disabled': {
+                    opacity: 0.5,
+                  }
+                }}
+              >
+                {editMode ? <EditOff /> : <Edit />}
+              </IconButton>
+            </Tooltip>
+
             <Tooltip title={showDataGrid ? "Hide Data Grid" : "Show Data Grid"}>
               <IconButton
                 onClick={handleDataGridToggle}
@@ -271,6 +304,9 @@ const Dashboard = () => {
           <MapContainer
             customers={customers}
             territories={showTerritories ? territories.filter(t => selectedTerritories.includes(t.id)) : []}
+            onTerritoryUpdate={handleTerritoryPolygonUpdate}
+            editMode={editMode}
+            confirmEdits={controls.confirmPolygonEdits}
           />
         </Paper>
       </Grid>
