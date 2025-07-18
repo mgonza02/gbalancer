@@ -1,62 +1,77 @@
 import {
-  Assessment,
-  Business,
-  People,
-  TrendingUp
+    Assessment,
+    Business,
+    People,
+    TrendingUp
 } from '@mui/icons-material';
 import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Container,
-  Grid,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography
+    Box,
+    Card,
+    CardContent,
+    Chip,
+    Container,
+    Grid,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Typography
 } from '@mui/material';
+import TerritoryDataGrid from '../components/TerritoryDataGrid';
+import TerritoryDataService from '../services/territoryDataService';
 
 const Analytics = () => {
-  // Mock data for analytics
-  const territoryMetrics = [
-    {
-      id: 1,
-      name: 'Territory 1',
-      customers: 45,
-      sales: 125000,
-      performance: 'Excellent',
-      efficiency: 92
-    },
-    {
-      id: 2,
-      name: 'Territory 2',
-      customers: 38,
-      sales: 98000,
-      performance: 'Good',
-      efficiency: 85
-    },
-    {
-      id: 3,
-      name: 'Territory 3',
-      customers: 52,
-      sales: 142000,
-      performance: 'Excellent',
-      efficiency: 95
-    },
-    {
-      id: 4,
-      name: 'Territory 4',
-      customers: 31,
-      sales: 78000,
-      performance: 'Average',
-      efficiency: 78
-    }
-  ];
+  // Load saved territories if available
+  const savedTerritories = TerritoryDataService.loadTerritoryData() || [];
+
+  // Mock data for analytics (use saved territories if available)
+  const territoryMetrics = savedTerritories.length > 0
+    ? savedTerritories.map(territory => ({
+        id: territory.id,
+        name: territory.name || `Territory ${territory.id}`,
+        customers: territory.customerCount || 0,
+        sales: territory.totalSales || 0,
+        performance: territory.totalSales > 120000 ? 'Excellent' :
+                    territory.totalSales > 90000 ? 'Good' : 'Average',
+        efficiency: Math.min(95, Math.max(70, Math.round((territory.customerCount || 0) * 2.5)))
+      }))
+    : [
+        {
+          id: 1,
+          name: 'Territory 1',
+          customers: 45,
+          sales: 125000,
+          performance: 'Excellent',
+          efficiency: 92
+        },
+        {
+          id: 2,
+          name: 'Territory 2',
+          customers: 38,
+          sales: 98000,
+          performance: 'Good',
+          efficiency: 85
+        },
+        {
+          id: 3,
+          name: 'Territory 3',
+          customers: 52,
+          sales: 142000,
+          performance: 'Excellent',
+          efficiency: 95
+        },
+        {
+          id: 4,
+          name: 'Territory 4',
+          customers: 31,
+          sales: 78000,
+          performance: 'Average',
+          efficiency: 78
+        }
+      ];
 
   const summaryStats = [
     {
@@ -313,6 +328,40 @@ const Analytics = () => {
             </Card>
           </Grid>
         </Grid>
+
+        {/* Territory Data Management */}
+        {savedTerritories.length > 0 && (
+          <Grid container spacing={3} sx={{ mt: 2 }}>
+            <Grid item xs={12}>
+              <Card
+                sx={{
+                  borderRadius: 3,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                  border: '1px solid',
+                  borderColor: 'divider'
+                }}
+              >
+                <CardContent>
+                  <Typography variant='h5' gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                    Territory Data Management
+                  </Typography>
+                  <TerritoryDataGrid
+                    territories={savedTerritories}
+                    onTerritoryUpdate={(id, field, value) => {
+                      // Handle territory updates
+                      console.log(`Territory ${id} ${field} updated to:`, value);
+                    }}
+                    onSave={(updatedTerritories) => {
+                      // Save updated territories
+                      TerritoryDataService.saveTerritoryData(updatedTerritories);
+                      console.log('Territories saved from Analytics page');
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        )}
       </Container>
     </Box>
   );

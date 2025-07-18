@@ -1,4 +1,4 @@
-import { Box, Grid, Paper } from '@mui/material';
+import { Box, Grid, Paper, Tab, Tabs } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -6,14 +6,16 @@ import { useLocation } from 'react-router-dom';
 import Controls from '../components/Controls';
 import DataSourceSelector from '../components/DataSourceSelector';
 import MapContainer from '../components/MapContainer';
+import TerritoryDataGrid from '../components/TerritoryDataGrid';
 import { defaultBalancerConfig } from '../config';
 import { handleMakeCustomers } from '../data/mockCustomers';
 import {
-  hasCustomerData,
-  loadCustomerData,
-  normalizeCustomerData,
-  saveCustomerData
+    hasCustomerData,
+    loadCustomerData,
+    normalizeCustomerData,
+    saveCustomerData
 } from '../services/customerDataService';
+import TerritoryDataService from '../services/territoryDataService';
 import { generateTerritories } from '../services/territoryService';
 
 const Dashboard = () => {
@@ -25,6 +27,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [dataSource, setDataSource] = useState('sample');
   const [customerDataLoaded, setCustomerDataLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState(0); // 0 for Map, 1 for Data Grid
 
   // Initialize customer data on component mount
   useEffect(() => {
@@ -102,6 +105,14 @@ const Dashboard = () => {
       } else {
         setTerritories(result.territories);
         setError('');
+
+        // Auto-save newly generated territories
+        TerritoryDataService.saveTerritoryData(result.territories);
+
+        // Switch to Data Grid tab if territories were generated successfully
+        if (result.territories.length > 0) {
+          setActiveTab(1);
+        }
       }
     } catch (err) {
       setError('An unexpected error occurred while generating territories.');
@@ -128,6 +139,29 @@ const Dashboard = () => {
     if (error) {
       setError('');
     }
+  };
+
+  // Handle territory field updates from DataGrid
+  const handleTerritoryUpdate = (territoryId, field, value) => {
+    setTerritories(prev =>
+      TerritoryDataService.updateTerritoryField(prev, territoryId, field, value)
+    );
+  };
+
+  // Handle save territories from DataGrid
+  const handleSaveTerritories = (updatedTerritories) => {
+    setTerritories(updatedTerritories);
+    const saved = TerritoryDataService.saveTerritoryData(updatedTerritories);
+    if (saved) {
+      console.log('Territories saved successfully');
+    } else {
+      setError('Failed to save territory data');
+    }
+  };
+
+  // Handle tab change
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
   };
 
   return (
@@ -175,21 +209,45 @@ const Dashboard = () => {
             </Box>
           </Grid>
 
-          {/* Map Container */}
+          {/* Main Content Area with Tabs */}
           <Grid size={{ xs: 12, lg: 8, xl: 9 }}>
             <Paper
               elevation={3}
               sx={{
                 borderRadius: 3,
                 overflow: 'hidden',
-                height: { xs: '60vh', sm: '70vh', lg: 'calc(100vh - 200px)' },
-                minHeight: { xs: '400px', sm: '500px', lg: '600px' },
+                height: { xs: '70vh', sm: '75vh', lg: 'calc(100vh - 200px)' },
+                minHeight: { xs: '500px', sm: '600px', lg: '700px' },
                 boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
                 border: '1px solid',
-                borderColor: 'divider'
+                borderColor: 'divider',
+                display: 'flex',
+                flexDirection: 'column'
               }}
             >
-              <MapContainer customers={customers} territories={territories} />
+              {/* Tabs Header */}
+              <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                <Tabs value={activeTab} onChange={handleTabChange} aria-label="territory views">
+                  <Tab label="Map View" />
+                  <Tab label="Data Grid" disabled={territories.length === 0} />
+                </Tabs>
+              </Box>
+
+              {/* Tab Content */}
+              <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                {activeTab === 0 && (
+                  <MapContainer customers={customers} territories={territories} />
+                )}
+                {activeTab === 1 && (
+                  <Box sx={{ height: '100%', p: 2 }}>
+                    <TerritoryDataGrid
+                      territories={territories}
+                      onTerritoryUpdate={handleTerritoryUpdate}
+                      onSave={handleSaveTerritories}
+                    />
+                  </Box>
+                )}
+              </Box>
             </Paper>
           </Grid>
         </Grid>

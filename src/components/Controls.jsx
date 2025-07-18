@@ -677,6 +677,27 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
         )}
 
         {territories && territories.length > 0 && (
+          <Accordion>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              sx={{
+                bgcolor: 'primary.50',
+                '&:hover': { bgcolor: 'primary.100' }
+              }}
+            >
+              <Typography variant='h6' sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                fontSize: { xs: '1rem', sm: '1.1rem' },
+                fontWeight: 600
+              }}>
+                <Assessment />
+                Territory Summary
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ pt: 2 }}>
+
           <Card sx={{
             mt: 2,
             borderRadius: 3,
@@ -851,6 +872,8 @@ const Controls = ({ controls, onControlsChange, onGenerateTerritories, error, te
               </Box>
             </CardContent>
           </Card>
+          </AccordionDetails>
+          </Accordion>
         )}
       </CardContent>
 
