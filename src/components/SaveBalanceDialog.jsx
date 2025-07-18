@@ -93,9 +93,14 @@ const SaveBalanceDialog = ({ open, onClose, controls, territories, customers }) 
         onClose(savedBalance);
       }, 1000);
     } catch (error) {
+      console.error('Save balance error:', error);
+      let message = `Failed to save: ${error.message}`;
+      if (error.name === 'QuotaExceededError' || error.code === 22) {
+        message = 'Storage quota exceeded. Please delete old configurations or reduce the amount of data.';
+      }
       setNotification({
         open: true,
-        message: `Failed to save: ${error.message}`,
+        message,
         severity: 'error'
       });
     } finally {
