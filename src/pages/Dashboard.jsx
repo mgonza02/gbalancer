@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Edit, EditOff, TableChart } from '@mui/icons-material';
+import { ChevronLeft, ChevronRight, Download, Edit, EditOff, TableChart } from '@mui/icons-material';
 import { Box, Grid, IconButton, Paper, Tooltip } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -190,6 +190,75 @@ const Dashboard = () => {
     console.log('Territory deleted:', territoryId);
   };
 
+  // Handle bulk export of selected territories
+  const handleBulkExportCustomers = () => {
+    if (!territories || territories.length === 0) {
+      console.warn('No territories to export');
+      return;
+    }
+
+    // Get selected territories or all territories if none selected
+    const territoriesToExport = selectedTerritories.length > 0
+      ? territories.filter(t => selectedTerritories.includes(t.id))
+      : territories;
+
+    if (territoriesToExport.length === 0) {
+      console.warn('No selected territories to export');
+      return;
+    }
+
+    // Collect all customers from selected territories
+    const allCustomers = [];
+    territoriesToExport.forEach(territory => {
+      if (territory.customers && territory.customers.length > 0) {
+        allCustomers.push(...territory.customers);
+      }
+    });
+
+    if (allCustomers.length === 0) {
+      console.warn('No customers found in selected territories');
+      return;
+    }
+
+    // Remove duplicates based on customer ID
+    const uniqueCustomers = allCustomers.filter((customer, index, array) =>
+      array.findIndex(c => c.id === customer.id) === index
+    );
+
+    // Format customers in the same structure as the upload format
+    const exportData = uniqueCustomers.map(customer => ({
+      id: customer.id,
+      customer_name: customer.customer_name || customer.name,
+      document_number: customer.document_number || `DOC${customer.id}`,
+      lat: customer.location.lat.toString(),
+      lng: customer.location.lng.toString(),
+      sales: customer.sales || 0
+    }));
+
+    // Create filename with territory info and timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const territoryCount = territoriesToExport.length;
+    const filename = `bulk_export_${territoryCount}territories_${exportData.length}customers_${timestamp}.json`;
+
+    // Create and download the file
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    console.log(`Bulk exported ${exportData.length} customers from ${territoryCount} territories:`, {
+      territories: territoriesToExport.map(t => ({ id: t.id, name: t.name || `Territory ${t.id}`, customers: t.customerCount })),
+      exportData
+    });
+  };
+
   // Handle save territories from DataGrid
   const handleSaveTerritories = (updatedTerritories) => {
     setTerritories(updatedTerritories);
@@ -270,7 +339,7 @@ const Dashboard = () => {
             position: 'relative'
           }}
         >
-          {/* DataGrid Toggle Button */}
+          {/* Map Controls */}
           <Box sx={{
             position: 'absolute',
             top: 36,
@@ -296,6 +365,25 @@ const Dashboard = () => {
                 }}
               >
                 {editMode ? <EditOff /> : <Edit />}
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Export All Selected Customers">
+              <IconButton
+                onClick={handleBulkExportCustomers}
+                disabled={territories.length === 0 || selectedTerritories.length === 0}
+                sx={{
+                  bgcolor: 'background.paper',
+                  boxShadow: 2,
+                  '&:hover': {
+                    bgcolor: 'grey.100',
+                  },
+                  '&:disabled': {
+                    opacity: 0.5,
+                  }
+                }}
+              >
+                <Download />
               </IconButton>
             </Tooltip>
 
@@ -384,7 +472,7 @@ const Dashboard = () => {
               onToggleTerritories={setShowTerritories}
               selectedTerritories={selectedTerritories}
               onSelectedTerritoriesChange={setSelectedTerritories}
-              onTerritoryDelete={handleTerritoryDelete} // Pass the delete handler
+              onTerritoryDelete={handleTerritoryDelete}
             />
           </Box>
         </Paper>

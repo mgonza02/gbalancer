@@ -1,4 +1,4 @@
-import { Add, Delete, LocationOn, People, Save, ZoomOutMap } from '@mui/icons-material';
+import { Add, Delete, Download, LocationOn, People, Save, ZoomOutMap } from '@mui/icons-material';
 import { Alert, Box, Button, Card, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Fab, Fade, IconButton, Paper, TextField, Tooltip, Typography } from '@mui/material';
 import { GoogleMap, InfoWindowF, MarkerF, PolygonF, useJsApiLoader } from '@react-google-maps/api';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -588,6 +588,47 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
     setDeleteDialogOpen(false);
   }, []);
 
+  // Handle export customers in territory as JSON
+  const handleExportTerritoryCustomers = useCallback((territory) => {
+    if (!territory || !territory.customers || territory.customers.length === 0) {
+      console.warn('No customers to export in this territory');
+      return;
+    }
+
+    // Format customers in the same structure as the upload format (matching sample-customer-data.json)
+    const exportData = territory.customers.map(customer => ({
+      id: customer.id,
+      customer_name: customer.customer_name || customer.name,
+      document_number: customer.document_number || `DOC${customer.id}`,
+      lat: customer.location.lat.toString(), // String format to match sample data
+      lng: customer.location.lng.toString(), // String format to match sample data
+      sales: customer.sales || 0
+    }));
+
+    // Create filename with territory info and timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const territoryName = territory.name ? territory.name.replace(/[^a-zA-Z0-9]/g, '_') : `Territory_${territory.id}`;
+    const filename = `${territoryName}_customers_${timestamp}.json`;
+
+    // Create and download the file
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    // Show success message
+    setSaveSuccess(`Exported ${exportData.length} customers from ${territoryName}`);
+    setTimeout(() => setSaveSuccess(null), 3000);
+
+    console.log(`Exported ${exportData.length} customers from territory ${territory.id}:`, exportData);
+  }, []);
   // Error handling
   if (loadError) {
     console.error('Google Maps API load error:', loadError);
@@ -782,7 +823,7 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
                 <Typography variant='h6' color='primary'>
                   Territory {activePolygon.id}
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
                   {editMode && (
                     <Chip
                       label="EDITABLE"
@@ -792,6 +833,27 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
                       sx={{ fontSize: '0.7rem' }}
                     />
                   )}
+                  <Tooltip title="Export Customers as JSON">
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={() => handleExportTerritoryCustomers(activePolygon)}
+                      disabled={!activePolygon.customers || activePolygon.customers.length === 0}
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        '&:hover': {
+                          bgcolor: 'primary.light',
+                          color: 'white'
+                        },
+                        '&:disabled': {
+                          opacity: 0.5
+                        }
+                      }}
+                    >
+                      <Download fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                   <Tooltip title="Delete Territory">
                     <IconButton
                       size="small"
@@ -840,7 +902,7 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
                 Customers in this territory:
               </Typography>
 
-              <Box sx={{ maxHeight: 150, overflowY: 'auto' }}>
+              <Box sx={{ maxHeight: 150, overflowY: 'auto', mb: 2 }}>
                 {activePolygon.customers.map(customer => (
                   <Chip
                     key={customer.id}
@@ -852,6 +914,45 @@ const MapContainer = ({ customers, territories, onTerritoryUpdate, editMode = fa
                   />
                 ))}
               </Box>
+
+              {/* Export Section */}
+              {activePolygon.customers && activePolygon.customers.length > 0 && (
+                <Box sx={{
+                  borderTop: 1,
+                  borderColor: 'divider',
+                  pt: 1,
+                  mt: 1
+                }}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Download />}
+                    onClick={() => handleExportTerritoryCustomers(activePolygon)}
+                    fullWidth
+                    sx={{
+                      fontSize: '0.75rem',
+                      py: 0.5,
+                      borderColor: 'primary.main',
+                      color: 'primary.main',
+                      '&:hover': {
+                        bgcolor: 'primary.light',
+                        color: 'white',
+                        borderColor: 'primary.main'
+                      }
+                    }}
+                  >
+                    Export {activePolygon.customerCount} Customers
+                  </Button>
+                  <Typography variant='caption' color='text.secondary' sx={{
+                    display: 'block',
+                    mt: 0.5,
+                    textAlign: 'center',
+                    fontSize: '0.7rem'
+                  }}>
+                    Downloads JSON file for focused planning
+                  </Typography>
+                </Box>
+              )}
             </Box>
             </Card>
           </InfoWindowF>
