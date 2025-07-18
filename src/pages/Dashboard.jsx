@@ -7,7 +7,6 @@ import { useLocation } from 'react-router-dom';
 import Controls from '../components/Controls';
 import DataSourceSelector from '../components/DataSourceSelector';
 import MapContainer from '../components/MapContainer';
-import TerritoryDataGrid from '../components/TerritoryDataGrid';
 import { defaultBalancerConfig } from '../config';
 import { handleMakeCustomers } from '../data/mockCustomers';
 import {
@@ -464,7 +463,7 @@ const Dashboard = () => {
 
           {/* DataGrid Content */}
           <Box sx={{ flex: 1, overflow: 'hidden', p: 1 }}>
-            <TerritoryDataGrid
+            {/* <TerritoryDataGrid
               territories={territories}
               onTerritoryUpdate={handleTerritoryUpdate}
               onSave={handleSaveTerritories}
@@ -473,7 +472,7 @@ const Dashboard = () => {
               selectedTerritories={selectedTerritories}
               onSelectedTerritoriesChange={setSelectedTerritories}
               onTerritoryDelete={handleTerritoryDelete}
-            />
+            /> */}
           </Box>
         </Paper>
       </Grid>
