@@ -1,5 +1,5 @@
-import { Refresh, Save } from '@mui/icons-material';
-import { Box, Chip, IconButton, TextField, Tooltip, Typography } from '@mui/material';
+import { Clear, Refresh, Save, SelectAll, Visibility, VisibilityOff } from '@mui/icons-material';
+import { Box, Button, Checkbox, Chip, FormControlLabel, IconButton, TextField, Tooltip, Typography } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -83,10 +83,11 @@ function assignZones(territories) {
   return processedTerritories.sort((a, b) => a.originalIndex - b.originalIndex);
 }
 
-export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate, onSave }) {
+export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate, onSave, showTerritories = true, onToggleTerritories, selectedTerritories = [], onSelectedTerritoriesChange }) {
   const [filter, setFilter] = useState('');
   const [rows, setRows] = useState([]);
   const [hasChanges, setHasChanges] = useState(false);
+  const [selectionModel, setSelectionModel] = useState([]);
 
   // Update rows when territories change
   useEffect(() => {
@@ -94,11 +95,19 @@ export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate,
       const processedTerritories = assignZones(territories);
       setRows(processedTerritories);
       setHasChanges(false);
+      // Initialize selection model with selected territories
+      if (selectedTerritories.length > 0) {
+        setSelectionModel(selectedTerritories);
+      } else {
+        // If no specific selection, select all territories by default
+        setSelectionModel(processedTerritories.map(t => t.id));
+      }
     } else {
       setRows([]);
       setHasChanges(false);
+      setSelectionModel([]);
     }
-  }, [territories]);
+  }, [territories, selectedTerritories]);
 
   // Filtered rows
   const filteredRows = useMemo(() => {
@@ -140,6 +149,30 @@ export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate,
     const processedTerritories = assignZones(territories);
     setRows(processedTerritories);
     setHasChanges(false);
+  };
+
+  // Handle selection change
+  const handleSelectionChange = (newSelectionModel) => {
+    setSelectionModel(newSelectionModel);
+    if (onSelectedTerritoriesChange) {
+      onSelectedTerritoriesChange(newSelectionModel);
+    }
+  };
+
+  // Handle select all/none
+  const handleSelectAll = () => {
+    const allIds = filteredRows.map(row => row.id);
+    setSelectionModel(allIds);
+    if (onSelectedTerritoriesChange) {
+      onSelectedTerritoriesChange(allIds);
+    }
+  };
+
+  const handleSelectNone = () => {
+    setSelectionModel([]);
+    if (onSelectedTerritoriesChange) {
+      onSelectedTerritoriesChange([]);
+    }
   };
 
   // Get zone color
@@ -208,7 +241,33 @@ export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate,
 
   return (
     <Box sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 1 }}>
+      {/* Top Controls Row */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+        {/* Territory Visibility Toggle */}
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={showTerritories}
+              onChange={(e) => onToggleTerritories && onToggleTerritories(e.target.checked)}
+              icon={<VisibilityOff />}
+              checkedIcon={<Visibility />}
+              size="small"
+            />
+          }
+          label={
+            <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
+              Show on Map
+            </Typography>
+          }
+          sx={{
+            ml: 0,
+            '& .MuiFormControlLabel-label': {
+              fontSize: '0.75rem'
+            }
+          }}
+        />
+
+        {/* Action Buttons */}
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Tooltip title="Refresh data">
             <IconButton onClick={handleRefresh} size="small">
@@ -227,6 +286,35 @@ export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate,
           </Tooltip>
         </Box>
       </Box>
+
+      {/* Selection Controls Row */}
+      {rows.length > 0 && (
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, px: 1 }}>
+          <Typography variant="caption" color="text.secondary">
+            {selectionModel.length} of {filteredRows.length} selected
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <Button
+              size="small"
+              variant="text"
+              startIcon={<SelectAll />}
+              onClick={handleSelectAll}
+              sx={{ minWidth: 'auto', px: 1, fontSize: '0.75rem' }}
+            >
+              All
+            </Button>
+            <Button
+              size="small"
+              variant="text"
+              startIcon={<Clear />}
+              onClick={handleSelectNone}
+              sx={{ minWidth: 'auto', px: 1, fontSize: '0.75rem' }}
+            >
+              None
+            </Button>
+          </Box>
+        </Box>
+      )}
 
       {rows.length > 0 && (
         <TextField
@@ -264,7 +352,10 @@ export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate,
             columns={columns}
             pageSize={25}
             rowsPerPageOptions={[10, 25, 50]}
-            disableSelectionOnClick
+            checkboxSelection
+            disableSelectionOnClick={false}
+            selectionModel={selectionModel}
+            onSelectionModelChange={handleSelectionChange}
             onCellEditCommit={handleEditCellChange}
             sx={{
               height: '100%',
@@ -276,6 +367,12 @@ export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate,
               },
               '& .MuiDataGrid-columnHeaders': {
                 bgcolor: 'grey.50',
+              },
+              '& .MuiDataGrid-row.Mui-selected': {
+                bgcolor: 'primary.light',
+                '&:hover': {
+                  bgcolor: 'primary.main',
+                },
               }
             }}
           />

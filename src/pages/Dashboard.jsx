@@ -29,6 +29,8 @@ const Dashboard = () => {
   const [dataSource, setDataSource] = useState('sample');
   const [customerDataLoaded, setCustomerDataLoaded] = useState(false);
   const [showDataGrid, setShowDataGrid] = useState(false); // Controls DataGrid panel visibility
+  const [showTerritories, setShowTerritories] = useState(true); // Controls territory visibility on map
+  const [selectedTerritories, setSelectedTerritories] = useState([]); // Selected territory IDs
 
   // Initialize customer data on component mount
   useEffect(() => {
@@ -70,6 +72,7 @@ const Dashboard = () => {
 
       // Clear any existing territories since data has changed
       setTerritories([]);
+      setSelectedTerritories([]);
 
       console.log(`Customer data loaded from ${source}:`, normalizedData.length, 'customers');
     } catch (err) {
@@ -113,6 +116,8 @@ const Dashboard = () => {
         // Show DataGrid panel if territories were generated successfully
         if (result.territories.length > 0) {
           setShowDataGrid(true);
+          // Select all territories by default
+          setSelectedTerritories(result.territories.map(t => t.id));
         }
       }
     } catch (err) {
@@ -129,6 +134,11 @@ const Dashboard = () => {
 
     // Set the territories from the loaded balance
     setTerritories(balance.territories);
+
+    // Select all loaded territories by default
+    if (balance.territories && balance.territories.length > 0) {
+      setSelectedTerritories(balance.territories.map(t => t.id));
+    }
 
     // Clear any existing error
     setError('');
@@ -163,6 +173,11 @@ const Dashboard = () => {
   // Handle DataGrid toggle
   const handleDataGridToggle = () => {
     setShowDataGrid(!showDataGrid);
+  };
+
+  // Handle territory visibility toggle
+  const handleTerritoryVisibilityToggle = () => {
+    setShowTerritories(!showTerritories);
   };
 
   return (
@@ -253,7 +268,10 @@ const Dashboard = () => {
             </Tooltip>
           </Box>
 
-          <MapContainer customers={customers} territories={territories} />
+          <MapContainer
+            customers={customers}
+            territories={showTerritories ? territories.filter(t => selectedTerritories.includes(t.id)) : []}
+          />
         </Paper>
       </Grid>
 
@@ -306,6 +324,10 @@ const Dashboard = () => {
               territories={territories}
               onTerritoryUpdate={handleTerritoryUpdate}
               onSave={handleSaveTerritories}
+              showTerritories={showTerritories}
+              onToggleTerritories={setShowTerritories}
+              selectedTerritories={selectedTerritories}
+              onSelectedTerritoriesChange={setSelectedTerritories}
             />
           </Box>
         </Paper>
