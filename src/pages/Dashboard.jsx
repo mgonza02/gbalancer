@@ -1,4 +1,5 @@
-import { Box, Grid, Paper, Tab, Tabs } from '@mui/material';
+import { ChevronLeft, ChevronRight, TableChart } from '@mui/icons-material';
+import { Box, Grid, IconButton, Paper, Tooltip } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -10,10 +11,10 @@ import TerritoryDataGrid from '../components/TerritoryDataGrid';
 import { defaultBalancerConfig } from '../config';
 import { handleMakeCustomers } from '../data/mockCustomers';
 import {
-    hasCustomerData,
-    loadCustomerData,
-    normalizeCustomerData,
-    saveCustomerData
+  hasCustomerData,
+  loadCustomerData,
+  normalizeCustomerData,
+  saveCustomerData
 } from '../services/customerDataService';
 import TerritoryDataService from '../services/territoryDataService';
 import { generateTerritories } from '../services/territoryService';
@@ -27,7 +28,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [dataSource, setDataSource] = useState('sample');
   const [customerDataLoaded, setCustomerDataLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState(0); // 0 for Map, 1 for Data Grid
+  const [showDataGrid, setShowDataGrid] = useState(false); // Controls DataGrid panel visibility
 
   // Initialize customer data on component mount
   useEffect(() => {
@@ -109,9 +110,9 @@ const Dashboard = () => {
         // Auto-save newly generated territories
         TerritoryDataService.saveTerritoryData(result.territories);
 
-        // Switch to Data Grid tab if territories were generated successfully
+        // Show DataGrid panel if territories were generated successfully
         if (result.territories.length > 0) {
-          setActiveTab(1);
+          setShowDataGrid(true);
         }
       }
     } catch (err) {
@@ -159,98 +160,157 @@ const Dashboard = () => {
     }
   };
 
-  // Handle tab change
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
+  // Handle DataGrid toggle
+  const handleDataGridToggle = () => {
+    setShowDataGrid(!showDataGrid);
   };
 
   return (
+    <Grid container spacing={{ xs: 2, md: 3 }} sx={{ height: '100%' }}>
+      {/* Controls Panel */}
+      <Grid size={{ xs: 12, lg: showDataGrid ? 3 : 4, xl: showDataGrid ? 2 : 3 }}>
+        <Box sx={{
+          height: { xs: 'auto', lg: 'calc(100vh - 200px)' },
+          overflowY: { xs: 'visible', lg: 'auto' },
+          '&::-webkit-scrollbar': {
+            width: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            bgcolor: 'grey.100',
+            borderRadius: '10px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            bgcolor: 'grey.400',
+            borderRadius: '10px',
+            '&:hover': {
+              bgcolor: 'grey.600',
+            },
+          },
+        }}>
+          {/* Data Source Selector */}
+          <DataSourceSelector
+            onCustomerDataLoad={handleCustomerDataLoad}
+            currentDataSource={dataSource}
+            disabled={loading}
+          />
 
-        <Grid container spacing={{ xs: 2, md: 3 }} sx={{ height: '100%' }}>
-          {/* Controls Panel */}
-          <Grid  size={{ xs: 12, lg: 4, xl: 3 }}>
-            <Box sx={{
-              height: { xs: 'auto', lg: 'calc(100vh - 200px)' },
-              overflowY: { xs: 'visible', lg: 'auto' },
-              '&::-webkit-scrollbar': {
-                width: '8px',
-              },
-              '&::-webkit-scrollbar-track': {
-                bgcolor: 'grey.100',
-                borderRadius: '10px',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                bgcolor: 'grey.400',
-                borderRadius: '10px',
-                '&:hover': {
-                  bgcolor: 'grey.600',
-                },
-              },
-            }}>
-              {/* Data Source Selector */}
-              <DataSourceSelector
-                onCustomerDataLoad={handleCustomerDataLoad}
-                currentDataSource={dataSource}
-                disabled={loading}
-              />
+          {/* Territory Controls */}
+          <Controls
+            controls={controls}
+            onControlsChange={handleControlsChange}
+            onGenerateTerritories={handleGenerateTerritories}
+            onLoadBalance={handleLoadBalance}
+            error={error}
+            territories={territories}
+            customers={customers}
+            loading={loading}
+            customerDataLoaded={customerDataLoaded}
+          />
+        </Box>
+      </Grid>
 
-              {/* Territory Controls */}
-              <Controls
-                controls={controls}
-                onControlsChange={handleControlsChange}
-                onGenerateTerritories={handleGenerateTerritories}
-                onLoadBalance={handleLoadBalance}
-                error={error}
-                territories={territories}
-                customers={customers}
-                loading={loading}
-                customerDataLoaded={customerDataLoaded}
-              />
+      {/* Main Map Area */}
+      <Grid size={{ xs: 12, lg: showDataGrid ? 5 : 8, xl: showDataGrid ? 6 : 9 }}>
+        <Paper
+          elevation={3}
+          sx={{
+            borderRadius: 3,
+            overflow: 'hidden',
+            height: { xs: '70vh', sm: '75vh', lg: 'calc(100vh - 200px)' },
+            minHeight: { xs: '500px', sm: '600px', lg: '700px' },
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+            border: '1px solid',
+            borderColor: 'divider',
+            position: 'relative'
+          }}
+        >
+          {/* DataGrid Toggle Button */}
+          <Box sx={{
+            position: 'absolute',
+            top: 36,
+            right: 16,
+            zIndex: 1000,
+            display: 'flex',
+            gap: 1
+          }}>
+            <Tooltip title={showDataGrid ? "Hide Data Grid" : "Show Data Grid"}>
+              <IconButton
+                onClick={handleDataGridToggle}
+                disabled={territories.length === 0}
+                sx={{
+                  bgcolor: 'background.paper',
+                  boxShadow: 2,
+                  '&:hover': {
+                    bgcolor: 'grey.100',
+                  },
+                  '&:disabled': {
+                    opacity: 0.5,
+                  }
+                }}
+              >
+                {showDataGrid ? <ChevronRight /> : <TableChart />}
+              </IconButton>
+            </Tooltip>
+          </Box>
+
+          <MapContainer customers={customers} territories={territories} />
+        </Paper>
+      </Grid>
+
+      {/* DataGrid Panel (Right Side, Collapsible) */}
+      <Grid size={{ xs: 12, lg: 4, xl: 4 }} sx={{ display: showDataGrid ? 'block' : 'none' }}>
+        <Paper
+          elevation={3}
+          sx={{
+            borderRadius: 3,
+            overflow: 'hidden',
+            height: { xs: '70vh', sm: '75vh', lg: 'calc(100vh - 200px)' },
+            minHeight: { xs: '500px', sm: '600px', lg: '700px' },
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+            border: '1px solid',
+            borderColor: 'divider',
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'relative'
+          }}
+        >
+          {/* DataGrid Header with Close Button */}
+          <Box sx={{
+            p: 2,
+            borderBottom: 1,
+            borderColor: 'divider',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            bgcolor: 'grey.50'
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TableChart color="primary" />
+              <Box>
+                <Box sx={{ fontWeight: 600, fontSize: '1.1rem' }}>Territory Data</Box>
+                <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                  {territories.length} territories
+                </Box>
+              </Box>
             </Box>
-          </Grid>
+            <Tooltip title="Hide Data Grid">
+              <IconButton onClick={handleDataGridToggle} size="small">
+                <ChevronLeft />
+              </IconButton>
+            </Tooltip>
+          </Box>
 
-          {/* Main Content Area with Tabs */}
-          <Grid size={{ xs: 12, lg: 8, xl: 9 }}>
-            <Paper
-              elevation={3}
-              sx={{
-                borderRadius: 3,
-                overflow: 'hidden',
-                height: { xs: '70vh', sm: '75vh', lg: 'calc(100vh - 200px)' },
-                minHeight: { xs: '500px', sm: '600px', lg: '700px' },
-                boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                border: '1px solid',
-                borderColor: 'divider',
-                display: 'flex',
-                flexDirection: 'column'
-              }}
-            >
-              {/* Tabs Header */}
-              <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                <Tabs value={activeTab} onChange={handleTabChange} aria-label="territory views">
-                  <Tab label="Map View" />
-                  <Tab label="Data Grid" disabled={territories.length === 0} />
-                </Tabs>
-              </Box>
-
-              {/* Tab Content */}
-              <Box sx={{ flex: 1, overflow: 'hidden' }}>
-                {activeTab === 0 && (
-                  <MapContainer customers={customers} territories={territories} />
-                )}
-                {activeTab === 1 && (
-                  <Box sx={{ height: '100%', p: 2 }}>
-                    <TerritoryDataGrid
-                      territories={territories}
-                      onTerritoryUpdate={handleTerritoryUpdate}
-                      onSave={handleSaveTerritories}
-                    />
-                  </Box>
-                )}
-              </Box>
-            </Paper>
-          </Grid>
-        </Grid>
+          {/* DataGrid Content */}
+          <Box sx={{ flex: 1, overflow: 'hidden', p: 1 }}>
+            <TerritoryDataGrid
+              territories={territories}
+              onTerritoryUpdate={handleTerritoryUpdate}
+              onSave={handleSaveTerritories}
+            />
+          </Box>
+        </Paper>
+      </Grid>
+    </Grid>
   );
 };
 

@@ -150,11 +150,11 @@ export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate,
   };
 
   const columns = [
-    { field: 'id', headerName: 'ID', width: 80 },
+    { field: 'id', headerName: 'ID', width: 60 },
     {
       field: 'code',
       headerName: 'Code',
-      width: 120,
+      width: 80,
       editable: true,
       renderCell: (params) => (
         <Typography variant="body2" fontWeight={500}>
@@ -165,7 +165,7 @@ export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate,
     {
       field: 'name',
       headerName: 'Name',
-      width: 200,
+      width: 140,
       editable: true,
       renderCell: (params) => (
         <Typography variant="body2">
@@ -176,7 +176,7 @@ export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate,
     {
       field: 'zone',
       headerName: 'Zone',
-      width: 120,
+      width: 100,
       renderCell: (params) => (
         <Chip
           label={params.value}
@@ -189,13 +189,13 @@ export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate,
     {
       field: 'customerCount',
       headerName: 'Customers',
-      width: 100,
+      width: 80,
       type: 'number'
     },
     {
       field: 'totalSales',
       headerName: 'Sales',
-      width: 120,
+      width: 90,
       type: 'number',
       valueFormatter: (params) => {
         if (params.value) {
@@ -207,9 +207,8 @@ export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate,
   ];
 
   return (
-    <Box sx={{ height: 600, width: '100%' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">Territories Data</Typography>
+    <Box sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 1 }}>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Tooltip title="Refresh data">
             <IconButton onClick={handleRefresh} size="small">
@@ -231,7 +230,7 @@ export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate,
 
       {rows.length > 0 && (
         <TextField
-          label="Filter by territory, code, or zone"
+          label="Filter territories"
           variant="outlined"
           size="small"
           fullWidth
@@ -247,7 +246,7 @@ export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate,
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          height: 400,
+          flex: 1,
           textAlign: 'center',
           color: 'text.secondary'
         }}>
@@ -259,22 +258,28 @@ export default function TerritoryDataGrid({ territories = [], onTerritoryUpdate,
           </Typography>
         </Box>
       ) : (
-        <DataGrid
-          rows={filteredRows}
-          columns={columns}
-          pageSize={10}
-          rowsPerPageOptions={[10, 25, 50]}
-          disableSelectionOnClick
-          onCellEditCommit={handleEditCellChange}
-          sx={{
-            '& .MuiDataGrid-cell--editable': {
-              backgroundColor: 'action.hover',
-            },
-            '& .MuiDataGrid-row:hover': {
-              backgroundColor: 'action.hover',
-            }
-          }}
-        />
+        <Box sx={{ flex: 1, minHeight: 0 }}>
+          <DataGrid
+            rows={filteredRows}
+            columns={columns}
+            pageSize={25}
+            rowsPerPageOptions={[10, 25, 50]}
+            disableSelectionOnClick
+            onCellEditCommit={handleEditCellChange}
+            sx={{
+              height: '100%',
+              '& .MuiDataGrid-cell--editable': {
+                backgroundColor: 'action.hover',
+              },
+              '& .MuiDataGrid-row:hover': {
+                backgroundColor: 'action.hover',
+              },
+              '& .MuiDataGrid-columnHeaders': {
+                bgcolor: 'grey.50',
+              }
+            }}
+          />
+        </Box>
       )}
 
       {hasChanges && (
