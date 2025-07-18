@@ -23,15 +23,16 @@ export const settings = {
 
 export const defaultBalancerConfig = {
   numSellers: 21,
-  customers: 500,
+  customers: 600,
   minTerritoriesPerSeller: 6,
-  territorySize: 1000,
+  territorySize: 100,
   minTerritories: 126,
   maxTerritories: 1000,
-  maxCustomersPerPolygon: 500,
-  minCustomersPerPolygon: 10,
+  maxCustomersPerPolygon: 600,
+  minCustomersPerPolygon: 1,
   maxSalesPerTerritory: 120000,
-  minSalesPerTerritory: 20
+  minSalesPerTerritory: 20,
+  confirmPolygonEdits: true // Confirm polygon edits before saving
   /*
   For next version, we will add the following properties to the config:
   maxOversizedTerritories: 5,

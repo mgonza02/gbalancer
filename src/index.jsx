@@ -1,19 +1,17 @@
 import { createRoot } from 'react-dom/client';
 
-// style.scss
-import 'assets/style.css';
+// Modern CSS reset and base styles
+import './index.modern.css';
 
-// scroll bar
-import 'simplebar-react/dist/simplebar.min.css';
-
-// apex-chart
+// Third-party styles
 import 'assets/third-party/apex-chart.css';
 import 'assets/third-party/react-table.css';
+import 'simplebar-react/dist/simplebar.min.css';
 
-// google-fonts
+// Google fonts
+import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/700.css';
 
 import '@fontsource/inter/400.css';
